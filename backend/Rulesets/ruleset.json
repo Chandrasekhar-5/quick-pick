@@ -1,0 +1,76 @@
+{
+    "name": "team-development-rules",
+    "description": "Rules for collaboration, branching, commits, pull requests, and communication",
+    "rules": {
+        "branchingPolicy": {
+            "main": "Production-ready code only",
+            "dev": "Integration branch",
+            "feature": "Individual feature branches",
+            "restrictions": [
+                "No direct push to main",
+                "No direct push to dev"
+            ]
+        },
+        "branchNamingConvention": {
+            "allowedPatterns": [
+                "feature/<short-description>",
+                "fix/<short-description>"
+            ],
+            "examples": [
+                "feature/auth-login",
+                "feature/order-api",
+                "feature/menu-schema",
+                "fix/jwt-bug"
+            ]
+        },
+        "commitMessageFormat": {
+            "guideline": "Use clear and meaningful commits",
+            "examples": [
+                "feat: added user registration API",
+                "fix: resolved password hashing bug",
+                "refactor: optimized order schema",
+                "chore: updated env example"
+            ]
+        },
+        "pullRequestRules": {
+            "required": true,
+            "descriptionRequired": true,
+            "descriptionMustInclude": [
+                "What was added",
+                "Why it was added"
+            ],
+            "minimumReviewers": 1
+        },
+        "codeStyle": [
+            "Use async/await",
+            "Use try/catch in controllers",
+            "Keep controllers thin",
+            "Business logic in services if needed",
+            "No console.logs in final code"
+        ],
+        "environmentVariables": {
+            "neverPush": [
+                ".env",
+                "secrets",
+                "API keys"
+            ],
+            "useInstead": ".env.example"
+        },
+        "conflictResolution": [
+            "Pull latest dev before starting work",
+            "Resolve conflicts locally",
+            "Ask team if unsure"
+        ],
+        "responsibility": [
+            "You break it -> You fix it",
+            "Finish feature before starting new one"
+        ],
+        "communication": {
+            "rule": "All major decisions must be shared in team group"
+        },
+        "respectAndOwnership": [
+            "No deleting others' code without discussion",
+            "Help teammates when blocked"
+        ]
+    }
+}
