@@ -12,7 +12,7 @@ const createVendor = async (req, res) => {
         const vendor = await Vendor.create({
             name,
             description,
-            collegeId: req.user.collegeId,
+            collegeId: req.user.college,
             ownerId: req.user._id
         });
         res.status(201).json(vendor);
