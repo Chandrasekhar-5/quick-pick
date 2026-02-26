@@ -4,7 +4,7 @@ const createCollege = async (req, res) => {
     try {
         const { name, address } = req.body;
 
-        const collegeExists = College.findOne({ name });
+        const collegeExists = await College.findOne({ name });
         if (collegeExists) {
             return res.status(400).json({ message: "College already exists" });
         }
