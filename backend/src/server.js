@@ -4,7 +4,7 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 
 const authRoutes = require("../src/routes/authRoutes");
-const collegeRoutes = require("../src/controllers/collegeController");
+const collegeRoutes = require("../src/routes/collegeRoutes");
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 
-app.use("./api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/colleges", collegeRoutes);
 
 
