@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 
 const authRoutes = require("../src/routes/authRoutes");
 const collegeRoutes = require("../src/routes/collegeRoutes");
+const vendorRoutes = require("../src/routes/vendorRoutes");
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/colleges", collegeRoutes);
+app.use("/api/vendors", vendorRoutes);
 
 
 app.get("/api/health", (req, res) => {
