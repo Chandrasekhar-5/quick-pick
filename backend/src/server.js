@@ -7,6 +7,7 @@ const authRoutes = require("../src/routes/authRoutes");
 const collegeRoutes = require("../src/routes/collegeRoutes");
 const vendorRoutes = require("../src/routes/vendorRoutes");
 const menuRoutes = require("../src/routes/menuRoutes");
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/colleges", collegeRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/orders", orderRoutes);
 
 
 app.get("/api/health", (req, res) => {
