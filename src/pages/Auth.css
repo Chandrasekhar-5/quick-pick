@@ -1,0 +1,88 @@
+.auth-page {
+  min-height: 100vh;
+  background: var(--bg-light);
+}
+
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-visual {
+  flex: 1;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: white;
+}
+
+.visual-content {
+  max-width: 400px;
+  text-align: center;
+}
+
+.visual-content h1 { font-size: 42px; font-weight: 800; margin: 20px 0 15px; }
+.visual-content p { font-size: 18px; opacity: 0.8; line-height: 1.6; }
+
+.auth-form-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 50px;
+}
+
+.auth-header { margin-bottom: 40px; }
+.auth-header h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+.auth-header p { color: var(--text-muted); font-weight: 600; }
+
+.form-group { margin-bottom: 25px; }
+.form-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+
+.input-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-light);
+  padding: 0 15px;
+  height: 50px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.input-box:focus-within { border-color: var(--primary); background: white; }
+.input-box input { flex: 1; background: transparent; border: none; outline: none; font-size: 15px; }
+.input-box svg { color: var(--text-muted); }
+
+.auth-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.auth-meta a { color: var(--primary); font-weight: 700; }
+
+.auth-btn { width: 100%; height: 54px; font-size: 16px; margin-bottom: 25px; }
+
+.auth-footer { text-align: center; font-size: 14px; color: var(--text-muted); }
+.auth-footer a { color: var(--primary); font-weight: 800; }
+
+@media (max-width: 1024px) {
+  .auth-visual { display: none; }
+}
+
+@media (max-width: 640px) {
+  .auth-form-side { padding: 20px; }
+  .auth-card { padding: 30px 20px; }
+}
