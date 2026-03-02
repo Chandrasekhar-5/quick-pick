@@ -1,0 +1,78 @@
+{
+  "name": "team-contribution-process",
+  "description": "Standard Git workflow that every team member must follow to avoid conflicts",
+  "contributionWorkflow": {
+    "rule0": {
+      "title": "Protected Branches",
+      "rules": [
+        "Do not push directly to main",
+        "Do not push directly to dev",
+        "All work must happen in feature/* or fix/* branches"
+      ]
+    },
+
+    "step1": {
+      "title": "Pull Latest Code",
+      "description": "Always update local dev branch before starting work",
+      "commands": [
+        "git checkout dev",
+        "git pull origin dev"
+      ]
+    },
+
+    "step2": {
+      "title": "Create Feature Branch",
+      "description": "Create a new branch from dev for your task",
+      "branchNamingConvention": [
+        "feature/<short-description>",
+        "fix/<short-description>"
+      ],
+      "exampleCommand": "git checkout -b feature/order-api"
+    },
+
+    "step3": {
+      "title": "Work On Assigned Files Only",
+      "description": "Work only on files related to your assigned feature. Inform team before modifying shared files."
+    },
+
+    "step4": {
+      "title": "Commit Properly",
+      "description": "Create small and meaningful commits",
+      "examples": [
+        "feat: added order creation API",
+        "fix: resolved JWT validation issue"
+      ],
+      "commandExample": "git commit -m \"feat: added order creation API\""
+    },
+
+    "step5": {
+      "title": "Push Feature Branch",
+      "description": "Push your branch to remote repository",
+      "commandExample": "git push origin feature/order-api"
+    },
+
+    "step6": {
+      "title": "Create Pull Request",
+      "description": "Open PR from feature branch to dev branch",
+      "requirements": [
+        "Explain what was added",
+        "Explain why it was added",
+        "Mention breaking changes if any"
+      ]
+    },
+
+    "step7": {
+      "title": "Code Review Before Merge",
+      "description": "At least one teammate must review and approve before merging into dev"
+    },
+
+    "step8": {
+      "title": "Test After Merge",
+      "description": "After merging, pull latest dev and test the application locally",
+      "commands": [
+        "git checkout dev",
+        "git pull origin dev"
+      ]
+    }
+  }
+}
