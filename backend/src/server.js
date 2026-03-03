@@ -9,6 +9,7 @@ const vendorRoutes = require("../src/routes/vendorRoutes");
 const menuRoutes = require("../src/routes/menuRoutes");
 const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 const app = express();
 
@@ -29,6 +30,10 @@ app.use("/api/analytics", analyticsRoutes);
 app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "success", message: "Quick pick api is running successfully" });
 });
+
+
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(process.env.PORT, () => {
     console.log("Server is running...");
