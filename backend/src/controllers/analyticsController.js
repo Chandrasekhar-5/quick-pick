@@ -1,13 +1,11 @@
-import { getVendorOrders } from './orderController';
-
 const Order = require('../models/Order');
 const Vendor = require('../models/Vendor');
 
-const getvendorMetrics = async (req, res) => {
+const getVendorMetrics = async (req, res) => {
     try {
-        const vendorShop = await Vendor.findOne({ user: req.user._id });
+        const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
         if (!vendorShop) {
-            return res.staus(404).json({ message: "No shop found for this vendor" });
+            return res.status(404).json({ message: "No shop found for this vendor" });
         }
 
         const metrics = await Order.aggregate([
@@ -19,7 +17,7 @@ const getvendorMetrics = async (req, res) => {
             },
             {
                 $group: {
-                    id: null,
+                    _id: null,
                     totalRevenue: { $sum: '$totalAmount' },
                     totalOrders: { $sum: 1 }
                 }
@@ -35,4 +33,4 @@ const getvendorMetrics = async (req, res) => {
     }
 };
 
-module.exports = { getvendorMetrics };
+module.exports = { getVendorMetrics };
