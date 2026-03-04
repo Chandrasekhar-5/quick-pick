@@ -1,0 +1,199 @@
+.order-history-page {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+}
+
+.header-text h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+.header-text p { font-size: 16px; color: var(--text-muted); font-weight: 600; }
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 15px;
+  height: 44px;
+  color: var(--text-muted);
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  width: 200px;
+}
+
+.filter-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 15px;
+  height: 44px;
+  color: var(--text-muted);
+}
+
+.filter-box select {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: transparent;
+  cursor: pointer;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.order-card {
+  padding: 25px;
+  transition: transform 0.2s;
+}
+
+.order-card:hover { transform: translateY(-4px); }
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shop-info {
+  display: flex;
+  gap: 15px;
+}
+
+.shop-info img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.shop-info h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.shop-info p { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.order-card-body {
+  margin-bottom: 20px;
+}
+
+.items-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.item-names {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex: 1;
+  padding-right: 40px;
+}
+
+.order-total {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.order-meta {
+  display: flex;
+  gap: 20px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.order-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  border-top: 1px dashed var(--border);
+}
+
+.footer-left, .footer-right {
+  display: flex;
+  gap: 12px;
+}
+
+.qr-mini-btn, .track-btn, .cancel-btn, .reorder-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.qr-mini-btn { background: #f6fff3; color: #60b246; border: 1px solid #60b246; }
+.track-btn { background: var(--primary); color: white; }
+.cancel-btn { background: #fff5f5; color: #e53935; border: 1px solid #e53935; }
+.reorder-btn { background: white; color: var(--primary); border: 1px solid var(--primary); }
+
+.no-orders {
+  text-align: center;
+  padding: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.no-orders h3 { font-size: 22px; font-weight: 800; }
+.no-orders p { color: var(--text-muted); margin-bottom: 10px; }
+
+@media (max-width: 992px) {
+  .history-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .header-actions { width: 100%; }
+  .search-box { flex: 1; }
+}
+
+@media (max-width: 768px) {
+  .order-card-footer { flex-direction: column; align-items: stretch; gap: 15px; }
+  .footer-left, .footer-right { justify-content: space-between; }
+  .footer-left button, .footer-right button { flex: 1; justify-content: center; }
+}
