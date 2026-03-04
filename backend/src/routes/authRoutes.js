@@ -6,7 +6,7 @@ const { protect } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *   post:
  *     summary: Register new user
  *     tags: [Auth]
@@ -31,7 +31,7 @@ router.post("/register", registerUser);
 
 /**
  * @swagger
- * /auth.login:
+ * /api/auth/login:
  *  post:
  *    summary: Login user
  *    tags: [Auth]

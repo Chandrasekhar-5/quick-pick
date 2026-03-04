@@ -5,7 +5,7 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * /orders:
+ * /api/orders:
  *   post:
  *     summary: Place an order
  *     tags: [Orders]
