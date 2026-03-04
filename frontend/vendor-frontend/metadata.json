@@ -1,0 +1,5 @@
+{
+  "name": "QuickPick Vendor Dashboard",
+  "description": "A comprehensive management interface for canteen vendors to manage menus, track real-time orders, and analyze revenue.",
+  "requestFramePermissions": []
+}
