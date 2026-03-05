@@ -64,35 +64,40 @@ export default function VendorProfile() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-line dark:border-slate-700 overflow-hidden shadow-sm transition-colors">
-        <div className="h-48 bg-emerald-500 relative">
-          <div className="absolute -bottom-16 left-8 flex items-end gap-6">
+<div className="flex items-center gap-6 px-8 pt-8">
             <div className="relative group">
-              <img
-                src={vendor?.logo || 'https://picsum.photos/seed/canteen/200/200'}
-                alt="Canteen Logo"
-                className="w-32 h-32 rounded-3xl border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-700 object-cover shadow-lg"
-                referrerPolicy="no-referrer"
-              />
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-              >
-                <Camera className="w-6 h-6" />
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
-                className="hidden" 
-                accept="image/*" 
-              />
-            </div>
+{vendor?.logo && !vendor.logo.includes("picsum.photos") ? (
+  <img
+    src={vendor.logo}
+    alt="Canteen Logo"
+    className="w-32 h-32 rounded-3xl border-4 border-white dark:border-slate-800 object-cover shadow-lg"
+  />
+) : (
+  <div className="w-32 h-32 rounded-3xl border-4 border-white dark:border-slate-800 bg-emerald-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+    {(vendor?.canteenName || "V")[0].toUpperCase()}
+  </div>
+)}
+
+  <button
+    onClick={() => fileInputRef.current?.click()}
+    className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+  >
+    <Camera className="w-6 h-6" />
+  </button>
+
+  <input
+    type="file"
+    ref={fileInputRef}
+    onChange={handleImageUpload}
+    className="hidden"
+    accept="image/*"
+  />
+</div>
             <div className="mb-4">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{vendor?.canteenName}</h2>
               <p className="text-gray-500 dark:text-gray-400 font-medium">{vendor?.ownerName}</p>
             </div>
           </div>
-        </div>
 
         <div className="pt-20 p-8">
           <div className="flex justify-between items-center mb-8">
