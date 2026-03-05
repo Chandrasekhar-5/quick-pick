@@ -15,7 +15,7 @@ const { protect } = require("../middlewares/authMiddleware");
  *       content:
  *         application/json:
  *           example:
- *             name: John Doe
+ *             name: Praveen
  *             email: praveen@praveen.com
  *             password: praveen_praveen
  *             role: student
@@ -23,6 +23,14 @@ const { protect } = require("../middlewares/authMiddleware");
  *     responses:
  *       201:
  *         description: User created successfully
+ *         content:
+ *            application/json:
+ *              example:
+ *               _id: userId_here
+ *               name: Praveen
+ *               email: praveen@praveen.com
+ *               role: student
+ *               token: jwt_token_here
  */
 
 
@@ -45,6 +53,14 @@ router.post("/register", registerUser);
  *    responses:
  *      200:
  *        description: User logged in successfully
+ *        content:
+ *            application/json:
+ *              example:
+ *               _id: userId_here
+ *               name: Praveen
+ *               email: praveen@praveen.com
+ *               role: student
+ *               token: jwt_token_here
  */
 router.post("/login", loginUser);
 router.get("/me",protect, getMe);
