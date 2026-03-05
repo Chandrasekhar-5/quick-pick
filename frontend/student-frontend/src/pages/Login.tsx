@@ -2,18 +2,29 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChefHat, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import API from '../services/api';
 import './Auth.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login("Alex Johnson");
-    navigate('/dashboard');
+    setError('');
+
+    try {
+      const response = await API.post('/auth/login', { email, password });
+      const { name, token } = response.data;
+      localStorage.setItem('studentToken', token);
+      login(name);
+      navigate('/dashboard');
+    } catch (err : any) {
+      setError(err.response?.data?.message || 'Invalid email or password');
+    }
   };
 
   return (
@@ -33,6 +44,9 @@ const Login: React.FC = () => {
               <h2>Welcome Back</h2>
               <p>Login to your student account</p>
             </div>
+
+            {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center',
+              backgroundColor: '#ffe6e6', padding: '10px', borderRadius: '5px' }}>{error}</div>}
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
