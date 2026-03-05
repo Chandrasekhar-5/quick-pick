@@ -22,6 +22,17 @@ const { protect, authorize } = require("../middlewares/authMiddleware");
  *     responses:
  *       201:
  *         description: Vendor created successfully
+ *         content:
+ *          application/json:
+ *            example:
+ *              name: shop name
+ *              description: shop description
+ *              collegeId: college id
+ *              isOpen: true
+ *              _id: vendor id
+ *              createdAt: 2024-06-01T12:00:00.000Z
+ *              updatedAt: 2024-06-01T12:00:00.000Z
+ *              __v: 0
  *       400:
  *         description: Vendor already has a shop
  */
