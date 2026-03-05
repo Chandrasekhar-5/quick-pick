@@ -145,11 +145,31 @@ export default function VendorDashboard() {
           </div>
           <div className="space-y-4">
             {[
-              { name: 'Veg Burger', sales: 145, price: 80, image: 'https://picsum.photos/seed/burger/100/100' },
-              { name: 'Cold Coffee', sales: 120, price: 60, image: 'https://picsum.photos/seed/coffee/100/100' },
-              { name: 'Paneer Sandwich', sales: 98, price: 120, image: 'https://picsum.photos/seed/sandwich/100/100' },
-              { name: 'Samosa', sales: 85, price: 15, image: 'https://picsum.photos/seed/samosa/100/100' },
-            ].map((item) => (
+  {
+    name: 'Masala Dosa',
+    sales: 180,
+    price: 45,
+    image: 'https://vismaifood.com/storage/app/uploads/public/8b4/19e/427/thumb__700_0_0_0_auto.jpg'
+  },
+  {
+    name: 'Chole Bhature',
+    sales: 150,
+    price: 60,
+    image: 'https://static.toiimg.com/thumb/53314156.cms?imgsize=1762111&width=800&height=800'
+  },
+  {
+    name: 'Veg Biryani',
+    sales: 120,
+    price: 90,
+    image: 'https://i.pinimg.com/474x/b6/0c/a5/b60ca58bc5c72d11a9679898d9deb006.jpg'
+  },
+  {
+    name: 'Cold Coffee',
+    sales: 95,
+    price: 40,
+    image: 'https://i.pinimg.com/564x/cc/cb/00/cccb00473890ed242fff3e0c66d3ff33.jpg'
+  }
+].map((item) => (
               <div key={item.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                 <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" referrerPolicy="no-referrer" />
                 <div className="flex-1">
