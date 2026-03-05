@@ -5,7 +5,7 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * /orders:
+ * /api/orders:
  *   post:
  *     summary: Place a new order
  *     description: Student places an order from a vendor
@@ -26,6 +26,23 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
  *     responses:
  *       201:
  *         description: Order created successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               userId: user id
+ *               vendorId: vendor id
+ *               items:
+ *                 - menuItem: menu item id
+ *                   quantity: 3
+ *                   priceAtOrder: 150
+ *                   _id: "69a92ba270d96fda71f54d2f"
+ *               totalAmount: 450
+ *               status: "Pending"
+ *               paymentStatus: "Pending"
+ *               _id: "69a92ba270d96fda71f54d2e"
+ *               createdAt: "2026-03-05T07:07:14.689Z"
+ *               updatedAt: "2026-03-05T07:07:14.689Z"
+ *               __v: 0
  *       400:
  *         description: Invalid order request
  */
@@ -68,7 +85,7 @@ router.get('/vendor-orders', protect, authorize('vendor'), getVendorOrders);
 
 /**
  * @swagger
- * /orders/{id}/status:
+ * /api/orders/{id}/status:
  *   put:
  *     summary: Update order status
  *     tags: [Orders]
