@@ -147,7 +147,14 @@ const MOCK_MENU: MenuItem[] = [
   }
 ];
 
-const categories = ['All', 'Snacks', 'Beverages', 'Main Course', 'Desserts'];
+const categories = [
+  'All',
+  'Breakfast',
+  'Snacks',
+  'Beverages',
+  'Main Course',
+  'Desserts'
+];
 
 export default function VendorMenu() {
   const [menu, setMenu] = useState<MenuItem[]>(MOCK_MENU);
@@ -157,6 +164,7 @@ export default function VendorMenu() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -259,9 +267,6 @@ export default function VendorMenu() {
               className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm dark:text-white"
             />
           </div>
-          <button className="p-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-            <SlidersHorizontal className="w-6 h-6" />
-          </button>
         </div>
 
         <button
@@ -431,27 +436,29 @@ export default function VendorMenu() {
                     </div>
                   </div>
                 </div>
-              </form>
-
               <div className="p-6 border-t border-line dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 flex gap-4">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    editingItem ? 'Save Changes' : 'Add Item'
-                  )}
-                </button>
-              </div>
+  <button
+    type="button"
+    onClick={() => setIsModalOpen(false)}
+    className="flex-1 px-6 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all"
+  >
+    Cancel
+  </button>
+
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    className="flex-1 px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 flex items-center justify-center gap-2"
+  >
+    {isSubmitting ? (
+      <Loader2 className="w-5 h-5 animate-spin" />
+    ) : (
+      editingItem ? "Save Changes" : "Add Item"
+    )}
+  </button>
+</div>
+</form>
+
             </motion.div>
           </div>
         )}

@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Search, User, Check, Clock } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext.tsx';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useNavigate } from "react-router-dom";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,6 +34,7 @@ export default function Topbar({ title }: TopbarProps) {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const { primaryColor } = useTheme();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -63,18 +65,11 @@ export default function Topbar({ title }: TopbarProps) {
   };
 
   return (
+    
     <header className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-line dark:border-slate-800 sticky top-0 z-40 px-8 flex items-center justify-between transition-colors">
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{title}</h2>
 
       <div className="flex items-center gap-6">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search orders, items..."
-            className="pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-800 border-none rounded-full text-sm focus:ring-2 focus:ring-emerald-500 w-64 transition-all dark:text-white"
-          />
-        </div>
 
         <div className="relative" ref={dropdownRef}>
           <button 
@@ -145,7 +140,10 @@ export default function Topbar({ title }: TopbarProps) {
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center gap-3 pl-6 border-l border-line dark:border-slate-800">
+        <div
+  onClick={() => navigate("/profile")}
+  className="flex items-center gap-3 pl-6 border-l border-line dark:border-slate-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 px-3 py-1 rounded-lg transition"
+>
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-gray-900 dark:text-white">Main Canteen</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Vendor Portal</p>
