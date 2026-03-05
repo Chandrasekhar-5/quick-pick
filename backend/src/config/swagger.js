@@ -6,7 +6,16 @@ const options = {
         info: {
             title: "Quick Pick API",
             version: "1.0.0",
-            description: "API documentation for Quick Pick Production System"
+            description: `
+API documentation for Quick Pick Production System
+
+Features:
+• JWT Authentication
+• Role Based Access Control
+• Vendor Order Management
+• Menu Management
+• Vendor Analytics
+`
         },
         servers: [
             {
