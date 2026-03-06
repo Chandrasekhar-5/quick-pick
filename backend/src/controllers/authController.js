@@ -11,7 +11,7 @@ const registerUser = async (req, res) => {
 
         const userExists = await User.findOne({ email });
         if (userExists) {
-            res.status(400).json({ message: "User already exists" });
+             return res.status(400).json({ message: "User already exists" });
         }
 
         const user = await User.create({
@@ -30,6 +30,8 @@ const registerUser = async (req, res) => {
                 role: user.role,
                 token: generateToken(user._id)
             });
+        } else {
+            return res.status(400).json({ message: "Invalid user data" });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });

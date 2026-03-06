@@ -14,12 +14,13 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
       const response = await API.post('/auth/login', { email, password });
-      const { name, token } = response.data;
-      localStorage.setItem('studentToken', token);
+      const { token, _id, name, email: userEmail, role } = response.data;
+      localStorage.setItem("studentToken", token);
+      localStorage.setItem("qp_user", JSON.stringify({ _id, name, email: userEmail, role }));
       login(response.data);
       navigate('/dashboard');
     } catch (err : any) {

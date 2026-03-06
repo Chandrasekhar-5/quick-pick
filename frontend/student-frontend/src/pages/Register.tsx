@@ -2,19 +2,38 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChefHat, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import API from '../services/api';
 import './Auth.css';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(name);
-    navigate('/dashboard');
+    setError("");
+
+    try {
+      const response = await API.post("/auth/register", {
+        name,
+        email,
+        password,
+        role: "student",
+        college: "699fe38a815da2e980032674",
+      });
+      
+      const { token, _id, name: userName, email: userEmail, role } = response.data;
+      localStorage.setItem("studentToken", token);
+      localStorage.setItem("qb_user", JSON.stringify({ _id, name: userName, email: userEmail, role }));
+      login(response.data);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -34,6 +53,9 @@ const Register: React.FC = () => {
               <h2>Create Account</h2>
               <p>Join the QuickPick community</p>
             </div>
+
+            {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center', 
+              backgroundColor: '#ffe6e6', padding: '10px', borderRadius: '5px' }}>{error}</div>}
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
