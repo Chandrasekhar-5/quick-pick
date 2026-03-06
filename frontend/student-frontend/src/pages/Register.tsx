@@ -28,7 +28,7 @@ const Register: React.FC = () => {
       
       const { token, _id, name: userName, email: userEmail, role } = response.data;
       localStorage.setItem("studentToken", token);
-      localStorage.setItem("qb_user", JSON.stringify({ _id, name: userName, email: userEmail, role }));
+      localStorage.setItem("qp_user", JSON.stringify({ _id, name: userName, email: userEmail, role }));
       login(response.data);
       navigate("/dashboard");
     } catch (err: any) {
