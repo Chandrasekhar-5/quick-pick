@@ -16,16 +16,16 @@ import './OrderHistory.css';
 
 const OrderHistory: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, updateOrderStatus, addToCart } = useApp();
-  const [filter, setFilter] = useState('All');
+  const { orders, cancelOrder, addToCart } = useApp();
+  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredOrders = orders.filter(order => {
-    const matchesStatus = filter === 'All' || order.status === filter;
+    const matchesStatus = filter === 'all' || order.status === filter;
     const matchesSearch = order.shopName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           order.id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const handleReorder = (order: any) => {
     order.items.forEach((item: any) => {
@@ -36,17 +36,17 @@ const OrderHistory: React.FC = () => {
 
   const handleCancel = (orderId: string) => {
     if (window.confirm('Are you sure you want to cancel this order?')) {
-      updateOrderStatus(orderId, 'Cancelled');
+      cancelOrder(orderId);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmed': return '#FC8019';
-      case 'Preparing': return '#f59e0b';
-      case 'Ready': return '#60b246';
-      case 'Picked Up': return '#48c479';
-      case 'Cancelled': return '#e53935';
+      case 'confirmed': return '#FC8019';
+      case 'preparing': return '#f59e0b';
+      case 'ready': return '#60b246';
+      case 'picked_up': return '#48c479';
+      case 'cancelled': return '#e53935';
       default: return '#9e9e9e';
     }
   };
@@ -71,12 +71,12 @@ const OrderHistory: React.FC = () => {
           <div className="filter-box">
             <Filter size={18} />
             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="All">All Status</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="Preparing">Preparing</option>
-              <option value="Ready">Ready</option>
-              <option value="Picked Up">Picked Up</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="all">All Status</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="preparing">Preparing</option>
+              <option value="ready">Ready</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -91,7 +91,7 @@ const OrderHistory: React.FC = () => {
                   <img src="https://picsum.photos/seed/shop/100/100" alt={order.shopName} referrerPolicy="no-referrer" />
                   <div className="text">
                     <h3>{order.shopName}</h3>
-                    <p>{order.date}</p>
+                    <p>{new Date(order.timestamp).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="status-badge" style={{ backgroundColor: getStatusColor(order.status) + '15', color: getStatusColor(order.status) }}>
@@ -121,26 +121,26 @@ const OrderHistory: React.FC = () => {
 
               <div className="order-card-footer">
                 <div className="footer-left">
-                  {order.status === 'Ready' && (
+                  {order.status === 'ready' && (
                     <button className="qr-mini-btn" onClick={() => navigate(`/order-tracking/${order.id}`)}>
                       <QrCode size={16} />
                       <span>View QR</span>
                     </button>
                   )}
-                  {(order.status === 'Confirmed' || order.status === 'Preparing' || order.status === 'Ready') && (
+                  {(order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready') && (
                     <button className="track-btn" onClick={() => navigate(`/order-tracking/${order.id}`)}>
                       Track Order
                     </button>
                   )}
                 </div>
                 <div className="footer-right">
-                  {order.status === 'Confirmed' && (
+                  {(order.status === 'confirmed' || order.status === 'preparing') && (
                     <button className="cancel-btn" onClick={() => handleCancel(order.id)}>
                       <XCircle size={16} />
                       <span>Cancel</span>
                     </button>
                   )}
-                  {(order.status === 'Picked Up' || order.status === 'Cancelled') && (
+                  {(order.status === 'picked_up' || order.status === 'cancelled') && (
                     <button className="reorder-btn" onClick={() => handleReorder(order)}>
                       <RefreshCw size={16} />
                       <span>Reorder</span>

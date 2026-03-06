@@ -107,25 +107,45 @@
 }
 
 .trending-card {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
-  padding: 12px;
-  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
   transition: transform 0.2s;
 }
 
 .trending-card:hover { transform: translateY(-5px); }
 
-.trending-card img {
+.trending-img-container {
   width: 100%;
   height: 140px;
-  border-radius: 12px;
+  cursor: pointer;
+}
+
+.trending-img-container img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  margin-bottom: 12px;
+}
+
+.trending-info {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trending-info .text { cursor: pointer; flex: 1; overflow: hidden; }
+
+.trending-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .trending-info h4 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -136,6 +156,37 @@
 .trending-info .price {
   font-weight: 800;
   color: var(--primary);
+  font-size: 14px;
+}
+
+.trending-meta .rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #48c479;
+}
+
+.add-mini-btn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #60b246;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 10px;
+}
+
+.add-mini-btn:hover { border-color: #60b246; background: #f6fff3; }
+
+.add-mini-btn.added {
+  background: #60b246;
+  color: white;
+  border-color: #60b246;
 }
 
 /* Shop Cards */
@@ -216,14 +267,11 @@
 .shop-header-row h3 { font-size: 20px; font-weight: 800; }
 
 .rating-box {
-  background: #48c479;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
+  color: #48c479;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 

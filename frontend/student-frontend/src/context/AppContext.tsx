@@ -26,10 +26,11 @@ interface Order {
   shopName: string;
   items: CartItem[];
   total: number;
-  status: 'confirmed' | 'preparing' | 'ready' | 'picked_up';
+  status: 'confirmed' | 'preparing' | 'ready' | 'picked_up' | 'cancelled';
   pickupSlot: string;
   timestamp: string;
   qrCode: string;
+  studentId: string;
 }
 
 interface Notification {
@@ -150,7 +151,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!window.confirm("Adding items from a different shop will clear your current cart. Continue?")) {
         return;
       }
-      setCart([]);
+      setCart([{ ...item, quantity: 1, shopId }]);
+      setCurrentShopId(shopId);
+      return;
     }
     setCurrentShopId(shopId);
     setCart(prev => {
@@ -245,7 +248,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: orderId,
       status: 'confirmed',
       timestamp: new Date().toISOString(),
-      qrCode: `${orderId}-${user?.studentId}-${Date.now()}`
+      qrCode: `${orderId}-${user?.studentId}-${Date.now()}`,
+      studentId: user?.studentId || ''
     };
     const updatedOrders = [newOrder, ...orders];
     setOrders(updatedOrders);
@@ -271,13 +275,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const cancelOrder = (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
-    if (order && order.status === 'confirmed') {
+    if (order && (order.status === 'confirmed' || order.status === 'preparing')) {
       // Refund logic
       addFunds(order.total);
-      const updatedOrders = orders.filter(o => o.id !== orderId);
+      const updatedOrders = orders.map(o => 
+        o.id === orderId ? { ...o, status: 'cancelled' as const } : o
+      );
       setOrders(updatedOrders);
       saveToStorage('qp_orders', updatedOrders);
       addNotification("Order Cancelled", `Order ${orderId} was cancelled and refund processed.`, "order");
+      alert(`Order ${orderId} has been cancelled successfully. Refund of ₹${order.total} added to your wallet.`);
     }
   };
 

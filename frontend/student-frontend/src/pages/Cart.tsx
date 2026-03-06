@@ -30,6 +30,7 @@ const Cart: React.FC = () => {
   const [selectedSlot, setSelectedSlot] = useState(slots[0].time);
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'cash'>('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
   const shop = shops.find(s => s.id === currentShopId);
@@ -71,9 +72,13 @@ const Cart: React.FC = () => {
         pickupSlot: selectedSlot,
       });
 
+      setIsSuccess(true);
       clearCart();
       setIsProcessing(false);
-      navigate(`/order-tracking/${orderId}`);
+      
+      setTimeout(() => {
+        navigate(`/order-tracking/${orderId}`);
+      }, 2000);
     }, 1500);
   };
 
@@ -250,6 +255,17 @@ const Cart: React.FC = () => {
           </div>
         </aside>
       </div>
+      {isSuccess && (
+        <div className="success-overlay">
+          <div className="success-card card">
+            <div className="success-icon">
+              <CheckCircle size={60} color="#60b246" />
+            </div>
+            <h2>Order Placed Successfully!</h2>
+            <p>Your order has been confirmed. Redirecting to tracking...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
