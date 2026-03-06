@@ -8,8 +8,9 @@ import './Home.css';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { location, cart } = useApp();
+  const { location, cart, addToCart } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
+  const [addedItemId, setAddedItemId] = useState<number | null>(null);
 
   const filteredShops = shops.filter(shop => shop.location === location);
 
@@ -61,11 +62,29 @@ const Home: React.FC = () => {
         <div className="trending-carousel">
           <div className="carousel-track">
             {[...trendingItems, ...trendingItems].map((item, index) => (
-              <div key={`${item.id}-${index}`} className="trending-card card" onClick={() => navigate(`/menu/${item.shopId}`)}>
-                <img src={item.image} alt={item.name} />
+              <div key={`${item.id}-${index}`} className="trending-card card">
+                <div className="trending-img-container" onClick={() => navigate(`/menu/${item.shopId}`)}>
+                  <img src={item.image} alt={item.name} />
+                </div>
                 <div className="trending-info">
-                  <h4>{item.name}</h4>
-                  <span className="price">₹{item.price}</span>
+                  <div className="text" onClick={() => navigate(`/menu/${item.shopId}`)}>
+                    <h4>{item.name}</h4>
+                    <div className="trending-meta">
+                      <span className="price">₹{item.price}</span>
+                      <span className="rating"><Star size={12} fill="#48c479" color="#48c479" /> 4.5</span>
+                    </div>
+                  </div>
+                  <button 
+                    className={`add-mini-btn ${addedItemId === item.id ? 'added' : ''}`} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(item, item.shopId);
+                      setAddedItemId(item.id);
+                      setTimeout(() => setAddedItemId(null), 2000);
+                    }}
+                  >
+                    {addedItemId === item.id ? 'ADDED' : 'ADD'}
+                  </button>
                 </div>
               </div>
             ))}

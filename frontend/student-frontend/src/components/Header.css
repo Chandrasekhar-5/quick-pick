@@ -90,7 +90,7 @@
 .header-nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 40px;
 }
 
 .nav-link, .user-trigger, .cart-link {
@@ -192,7 +192,27 @@
   font-size: 14px;
 }
 
-.user-nav { position: relative; }
+.user-nav { 
+  position: relative; 
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dropdown-arrow {
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.dropdown-arrow:hover {
+  color: var(--primary);
+}
+
 .user-dropdown {
   position: absolute;
   top: 100%;

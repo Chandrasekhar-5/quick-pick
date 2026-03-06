@@ -206,7 +206,6 @@ const Profile: React.FC = () => {
 
           <div className="card qr-id-card">
             <div className="id-header">
-              <img src="https://picsum.photos/seed/logo/40/40" alt="Logo" referrerPolicy="no-referrer" />
               <span>STUDENT ID CARD</span>
             </div>
             <div className="id-body">
