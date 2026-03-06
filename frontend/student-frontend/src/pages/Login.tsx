@@ -20,7 +20,7 @@ const Login: React.FC = () => {
       const response = await API.post('/auth/login', { email, password });
       const { name, token } = response.data;
       localStorage.setItem('studentToken', token);
-      login(name);
+      login(response.data);
       navigate('/dashboard');
     } catch (err : any) {
       setError(err.response?.data?.message || 'Invalid email or password');
