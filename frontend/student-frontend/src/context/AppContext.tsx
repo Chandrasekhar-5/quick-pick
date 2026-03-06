@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { campusLocations, shops } from '../data/shops';
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  walletBalance: number;
+  studentId: string;
+  rewardPoints: number;
+}
+
 interface CartItem {
   id: number;
   name: string;
@@ -41,7 +51,8 @@ interface Transaction {
 }
 
 interface AppContextType {
-  user: { name: string; walletBalance: number; studentId: string; rewardPoints: number } | null;
+  user: User | null;
+  isLoading: boolean;
   location: string;
   setLocation: (loc: string) => void;
   detectLocation: () => void;
@@ -52,7 +63,7 @@ interface AppContextType {
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, delta: number) => void;
   clearCart: () => void;
-  login: (name: string) => void;
+  login: (userData: any) => void;
   logout: () => void;
   addFunds: (amount: number) => void;
   deductFunds: (amount: number) => boolean;
@@ -70,7 +81,13 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<{ name: string; walletBalance: number; studentId: string; rewardPoints: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('qp_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
   const [location, setLocation] = useState('Campus Building A');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentShopId, setCurrentShopId] = useState<number | null>(null);
@@ -79,9 +96,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('qp_user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-    
+
     const savedOrders = localStorage.getItem('qp_orders');
     if (savedOrders) setOrders(JSON.parse(savedOrders));
 
@@ -90,16 +105,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const savedTransactions = localStorage.getItem('qp_transactions');
     if (savedTransactions) setTransactions(JSON.parse(savedTransactions));
+
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('qp_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('qp_user');
+    }
+  }, [user]);
 
   const saveToStorage = (key: string, data: any) => {
     localStorage.setItem(key, JSON.stringify(data));
   };
 
-  const login = (name: string) => {
-    const newUser = { name, walletBalance: 500.00, studentId: "STU2024001", rewardPoints: 150 };
+  const login = (userData: any) => {
+    if (userData.role !== "student") {
+      alert("Only students are allowed to login");
+      return;
+    }
+    const newUser: User = {
+      _id: userData._id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      walletBalance: 500.00,
+      studentId: userData._id.substring(0, 8).toUpperCase(),
+      rewardPoints: 150
+    };
     setUser(newUser);
-    saveToStorage('qp_user', newUser);
     addNotification("Welcome to QuickPick!", "Start pre-ordering from your favorite campus shops.", "system");
   };
 
@@ -108,6 +144,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
     setCurrentShopId(null);
     localStorage.removeItem('qp_user');
+    localStorage.removeItem('studentToken');
   };
 
   const detectLocation = () => {
@@ -293,7 +330,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-      user, location, setLocation, detectLocation, cart, currentShopId, setCurrentShopId, 
+      user, isLoading, location, setLocation, detectLocation, cart, currentShopId, setCurrentShopId, 
       addToCart, removeFromCart, updateQuantity, clearCart, login, logout, 
       addFunds, deductFunds, orders, placeOrder, updateOrderStatus, cancelOrder,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead,

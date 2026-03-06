@@ -17,7 +17,20 @@ import Profile from './pages/Profile';
 import SearchResults from './pages/SearchResults';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useApp();
+  const { user, isLoading } = useApp();
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+      </div>
+    );
+  }
+
   if (!user) return <Navigate to="/" replace />;
   return (
     <>
