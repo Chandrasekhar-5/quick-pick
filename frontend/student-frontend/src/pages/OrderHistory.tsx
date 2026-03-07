@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ShoppingBag, 
-  Clock, 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  XCircle,
-  QrCode,
-  CheckCircle,
-  AlertCircle
+  ShoppingBag, Clock, Search, Filter, RefreshCw, XCircle, QrCode
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './OrderHistory.css';
@@ -22,16 +14,28 @@ const OrderHistory: React.FC = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = filter === 'all' || order.status === filter;
-    const matchesSearch = order.shopName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          order.id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const safeShopName = order.shopName || 'Unknown Shop';
+    const safeOrderId = order.id || '';
+    const safeSearchQuery = searchQuery || '';
+
+    const matchesSearch = safeShopName.toLowerCase().includes(safeSearchQuery.toLowerCase()) || 
+                          safeOrderId.toLowerCase().includes(safeSearchQuery.toLowerCase());
+                          
     return matchesStatus && matchesSearch;
-  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }).sort((a, b) => {
+    const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+    const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+    return timeB - timeA;
+  });
 
   const handleReorder = (order: any) => {
-    order.items.forEach((item: any) => {
-      addToCart(item, order.shopId);
-    });
-    navigate('/cart');
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach((item: any) => {
+        addToCart(item, order.shopId);
+      });
+      navigate('/cart');
+    }
   };
 
   const handleCancel = (orderId: string) => {
@@ -88,10 +92,10 @@ const OrderHistory: React.FC = () => {
             <div key={order.id} className="order-card card">
               <div className="order-card-header">
                 <div className="shop-info">
-                  <img src="https://picsum.photos/seed/shop/100/100" alt={order.shopName} referrerPolicy="no-referrer" />
+                  <img src="https://picsum.photos/seed/shop/100/100" alt={order.shopName || 'Shop'} referrerPolicy="no-referrer" />
                   <div className="text">
-                    <h3>{order.shopName}</h3>
-                    <p>{new Date(order.timestamp).toLocaleDateString()}</p>
+                    <h3>{order.shopName || 'Unknown Shop'}</h3>
+                    <p>{order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'Unknown Date'}</p>
                   </div>
                 </div>
                 <div className="status-badge" style={{ backgroundColor: getStatusColor(order.status) + '15', color: getStatusColor(order.status) }}>
@@ -102,7 +106,8 @@ const OrderHistory: React.FC = () => {
               <div className="order-card-body">
                 <div className="items-summary">
                   <p className="item-names">
-                    {order.items.map(item => `${item.name} x ${item.quantity}`).join(', ')}
+                    {/* DEFENSIVE: Optional chaining on order.items */}
+                    {order.items?.map(item => `${item.name} x ${item.quantity}`).join(', ') || 'No items'}
                   </p>
                   <p className="order-total">₹{order.total}</p>
                 </div>
@@ -110,7 +115,7 @@ const OrderHistory: React.FC = () => {
                 <div className="order-meta">
                   <div className="meta-item">
                     <Clock size={14} />
-                    <span>Slot: {order.pickupSlot}</span>
+                    <span>Slot: {order.pickupSlot || 'N/A'}</span>
                   </div>
                   <div className="meta-item">
                     <ShoppingBag size={14} />
