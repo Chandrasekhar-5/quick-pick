@@ -31,6 +31,7 @@ interface Order {
   timestamp: string;
   qrCode: string;
   studentId: string;
+  paymentMethod?: 'wallet' | 'cash';
 }
 
 interface Notification {
@@ -291,14 +292,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const order = orders.find(o => o.id === orderId);
     if (order && (order.status === 'confirmed' || order.status === 'preparing')) {
       // Refund logic
-      addFunds(order.total);
-      const updatedOrders = orders.map(o => 
-        o.id === orderId ? { ...o, status: 'cancelled' as const } : o
-      );
+      if (order.paymentMethod === 'wallet') {
+        addFunds(order.total);
+        addNotification("Order Cancelled", `Order ${orderId} was cancelled and ₹ ${order.total} was refunded.`, "order");
+      } else {
+        addNotification("Order Cancelled", `Order ${orderId} (Pay at Counter) was cancelled successfully.`, "order");
+      }
+      
+      const updatedOrders = orders.filter(o => o.id !== orderId);
       setOrders(updatedOrders);
       saveToStorage('qp_orders', updatedOrders);
-      addNotification("Order Cancelled", `Order ${orderId} was cancelled and refund processed.`, "order");
-      alert(`Order ${orderId} has been cancelled successfully. Refund of ₹${order.total} added to your wallet.`);
     }
   };
 

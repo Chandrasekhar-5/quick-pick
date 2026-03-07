@@ -1,47 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ShoppingBag, 
-  Clock, 
-  MapPin, 
-  CreditCard, 
-  Wallet as WalletIcon, 
-  ChevronRight, 
-  Plus, 
-  Minus, 
-  AlertCircle,
-  TrendingUp,
-  CheckCircle,
-  Shield,
-  Star
+  ShoppingBag, Clock, MapPin, CreditCard, Wallet as WalletIcon, 
+  ChevronRight, Plus, Minus, AlertCircle, TrendingUp, CheckCircle, Shield, Star
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { slots } from '../data/slots';
-import { shops } from '../data/shops';
-import { menuData } from '../data/menuData';
+import API from '../services/api'; 
 import './Cart.css';
 
 const Cart: React.FC = () => {
   const { 
-    cart, updateQuantity, user, location, currentShopId, placeOrder, deductFunds, clearCart, addToCart 
+    cart, updateQuantity, user, currentShopId, placeOrder, deductFunds, clearCart, addToCart 
   } = useApp();
   const navigate = useNavigate();
   
-  const [selectedSlot, setSelectedSlot] = useState(slots[0].time);
+  const[selectedSlot, setSelectedSlot] = useState(slots[0].time);
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'cash'>('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const shop = shops.find(s => s.id === currentShopId);
+  // NEW: State to hold the REAL shop details from the backend
+  const[realShop, setRealShop] = useState({
+    name: "Loading Shop...",
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600",
+    location: "Main Campus"
+  });
+
+  // NEW: Fetch the real shop name when Cart loads
+  useEffect(() => {
+    const fetchRealShop = async () => {
+      if (currentShopId) {
+        try {
+          const res = await API.get('/vendors');
+          const foundShop = res.data.find((v: any) => v._id === currentShopId);
+          if (foundShop) {
+            setRealShop(prev => ({ ...prev, name: foundShop.name }));
+          }
+        } catch (err) {
+          console.error("Could not load shop details");
+        }
+      }
+    };
+    fetchRealShop();
+  }, [currentShopId]);
+
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = Math.round(subtotal * 0.05);
   const total = subtotal + tax;
 
-  // Suggestions: items from the same shop not in cart
-  const suggestions = currentShopId 
-    ? menuData[currentShopId].filter(item => !cart.find(c => c.id === item.id)).slice(0, 3)
-    : [];
+  const suggestions =[
+    { id: 'mock-1', name: 'Extra Ketchup & Tissues', price: 5, isVeg: true },
+    { id: 'mock-2', name: 'Cold Drink (250ml)', price: 40, isVeg: true },
+    { id: 'mock-3', name: 'Chocolate Brownie', price: 60, isVeg: true }
+  ].filter(item => !cart.find(c => c.name === item.name));
 
   const handlePlaceOrder = async () => {
     if (!user) return navigate('/');
@@ -53,33 +66,54 @@ const Cart: React.FC = () => {
     setIsProcessing(true);
     setError('');
 
-    // Simulate network delay
-    setTimeout(() => {
-      if (paymentMethod === 'wallet') {
-        const success = deductFunds(total);
-        if (!success) {
-          setError('Payment failed. Please try again.');
-          setIsProcessing(false);
-          return;
+    try {
+      const backendItems = cart.map(item => {
+        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(item.id.toString());
+        
+        if (!isValidObjectId) {
+          console.warn(`Item ${item.id} is not a valid ObjectId. Make sure your cart items have real MongoDB IDs.`);
         }
-      }
+        
+        return {
+          menuItem: item.id,
+          quantity: item.quantity
+        };
+      });
 
-      const orderId = placeOrder({
-        shopId: currentShopId!,
-        shopName: shop!.name,
+      // Make the real POST request to our database!
+      const response = await API.post('/orders', {
+        vendorId: currentShopId,
+        items: backendItems,
+        // Optional: If you want to send payment method to backend later, you can add it here!
+      });
+
+      console.log("Real Order Created in DB!", response.data);
+
+      if (paymentMethod === 'wallet') deductFunds(total);
+
+      // Trigger the frontend's local tracking flow AND save the paymentMethod
+      const mockOrderId = placeOrder({
+        shopId: currentShopId as any,
+        shopName: realShop.name, // USE REAL NAME
         items: cart,
         total,
         pickupSlot: selectedSlot,
-      });
+        paymentMethod: paymentMethod // FIX: Pass payment method so cancelOrder knows!
+      } as any); // Cast as any to avoid strict TS errors for the new field
 
       setIsSuccess(true);
       clearCart();
       setIsProcessing(false);
       
       setTimeout(() => {
-        navigate(`/order-tracking/${orderId}`);
+        navigate(`/order-tracking/${mockOrderId}`);
       }, 2000);
-    }, 1500);
+
+    } catch (err: any) {
+      console.error("Failed to place order:", err);
+      setError(err.response?.data?.message || 'Failed to place order with backend.');
+      setIsProcessing(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -103,10 +137,10 @@ const Cart: React.FC = () => {
         <div className="cart-main">
           <div className="card cart-items-card">
             <div className="cart-shop-header">
-              <img src={shop?.image} alt={shop?.name} referrerPolicy="no-referrer" />
+              <img src={realShop.image} alt={realShop.name} referrerPolicy="no-referrer" />
               <div className="shop-info">
-                <h3>{shop?.name}</h3>
-                <p>{shop?.location}</p>
+                <h3>{realShop.name}</h3>
+                <p>{realShop.location}</p>
               </div>
             </div>
             
@@ -114,7 +148,7 @@ const Cart: React.FC = () => {
               {cart.map(item => (
                 <div key={item.id} className="cart-item-row">
                   <div className="item-name-box">
-                    <div className="veg-icon" data-veg={item.isVeg}></div>
+                    <div className="veg-icon" data-veg={(item as any).isVeg}></div>
                     <span>{item.name}</span>
                   </div>
                   <div className="item-controls">
@@ -142,7 +176,7 @@ const Cart: React.FC = () => {
                         <h5>{item.name}</h5>
                         <span>₹{item.price}</span>
                       </div>
-                      <button className="add-mini-btn" onClick={() => addToCart(item, currentShopId!)}>
+                      <button className="add-mini-btn" onClick={() => addToCart(item as any, currentShopId!)}>
                         ADD
                       </button>
                     </div>
@@ -226,9 +260,9 @@ const Cart: React.FC = () => {
             </div>
 
             {error && (
-              <div className="cart-error">
+              <div className="cart-error" style={{ color: 'red', marginTop: '10px' }}>
                 <AlertCircle size={16} />
-                <span>{error}</span>
+                <span style={{ marginLeft: '5px' }}>{error}</span>
               </div>
             )}
 
