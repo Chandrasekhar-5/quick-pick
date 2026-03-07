@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, Clock, Search, TrendingUp, Users, ChevronRight } from 'lucide-react';
-import { shops } from '../data/shops';
 import { menuData } from '../data/menuData';
 import { useApp } from '../context/AppContext';
+import API from '../services/api';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -12,7 +12,37 @@ const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [addedItemId, setAddedItemId] = useState<number | null>(null);
 
-  const filteredShops = shops.filter(shop => shop.location === location);
+  const[realShops, setRealShops] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const response = await API.get('/vendors');
+
+        const mappedShops = response.data.map((vendor: any) => ({
+          id: vendor._id,
+          name: vendor.name,
+          description: vendor.description || 'Delicious food served hot.',
+          isOpen: vendor.isOpen,
+          location: 'Main Campus',
+          image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600",
+          crowdLevel: "low",
+          rating: 4.5,
+          popularItems: ["Snacks", "Beverages"],
+          prepTime: "10-15 min"
+        }));
+
+        setRealShops(mappedShops);
+      } catch(error) {
+        console.error("Failed to fetch shops:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVendors();
+  }, []);
 
   // Get trending items across all shops
   const allItems: any[] = [];
@@ -29,6 +59,10 @@ const Home: React.FC = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: '100px' }}><h2>Loading Campus Shops...</h2></div>;
+  }
 
   return (
     <div className="home-page">
@@ -103,8 +137,8 @@ const Home: React.FC = () => {
         </div>
 
         <div className="shops-grid grid-3">
-          {filteredShops.length > 0 ? (
-            filteredShops.map(shop => (
+          {realShops.length > 0 ? (
+            realShops.map(shop => (
               <div 
                 key={shop.id} 
                 className="shop-card card"
@@ -131,7 +165,7 @@ const Home: React.FC = () => {
                   <div className="popular-items">
                     <span className="label">Popular:</span>
                     <div className="tags">
-                      {shop.popularItems.map(item => <span key={item} className="tag">{item}</span>)}
+                      {shop.popularItems.map((item: string) => <span key={item} className="tag">{item}</span>)}
                     </div>
                   </div>
 
@@ -161,7 +195,7 @@ const Home: React.FC = () => {
           <p>Explore shops across all campus buildings</p>
         </div>
         <div className="shops-scroll">
-          {shops.map(shop => (
+          {realShops.map(shop => (
             <div 
               key={shop.id} 
               className="shop-card-mini card"
