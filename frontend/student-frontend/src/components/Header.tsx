@@ -79,7 +79,7 @@ const Header: React.FC = () => {
         </div>
 
         <nav className="header-nav">
-          <Link to="/dashboard" className="nav-link">
+          <Link to="/search" className="nav-link">
             <Search size={20} />
             <span>Search</span>
           </Link>
@@ -127,10 +127,13 @@ const Header: React.FC = () => {
             )}
           </div>
 
-          <div className="user-nav" onClick={(e) => { e.stopPropagation(); setShowUserDropdown(!showUserDropdown); }}>
-            <div className="user-trigger">
+          <div className="user-nav">
+            <div className="user-trigger" onClick={() => navigate('/profile')}>
               <User size={20} />
               <span>{user?.name.split(' ')[0] || 'Sign In'}</span>
+            </div>
+            <div className="dropdown-arrow" onClick={(e) => { e.stopPropagation(); setShowUserDropdown(!showUserDropdown); }}>
+              <ChevronDown size={14} />
             </div>
             
             {showUserDropdown && user && (

@@ -1,26 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, Clock, Search, TrendingUp, Users, ChevronRight } from 'lucide-react';
-import { shops } from '../data/shops';
-import { menuData } from '../data/menuData';
 import { useApp } from '../context/AppContext';
+import API from '../services/api';
 import './Home.css';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { location, cart } = useApp();
+  const { location, addToCart } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
+  const [addedItemId, setAddedItemId] = useState<string | null>(null);
+  
+  // Real database states
+  const[realShops, setRealShops] = useState<any[]>([]);
+  const [trendingItems, setTrendingItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredShops = shops.filter(shop => shop.location === location);
+  // Fetch Shops and Trending Items simultaneously
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        const [vendorsRes, trendingRes] = await Promise.all([
+          API.get('/vendors'),
+          API.get('/menu/campus/trending') // NEW API CALL!
+        ]);
+        
+        // ADAPTER: Map the shops
+        const mappedShops = vendorsRes.data.map((vendor: any) => ({
+          id: vendor._id,
+          name: vendor.name,
+          description: vendor.description || 'Delicious food served hot.',
+          isOpen: vendor.isOpen,
+          location: 'Main Campus',
+          image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600",
+          crowdLevel: "Low",
+          rating: 4.5,
+          popularItems: ["Snacks", "Beverages"],
+          prepTime: "10-15 min"
+        }));
 
-  // Get trending items across all shops
-  const allItems: any[] = [];
-  Object.entries(menuData).forEach(([shopId, items]) => {
-    items.forEach((item: any) => {
-      allItems.push({ ...item, shopId: Number(shopId) });
-    });
-  });
-  const trendingItems = allItems.slice(0, 8); // Mock trending
+        // ADAPTER: Map the trending items
+        const mappedTrending = trendingRes.data.map((item: any) => ({
+          id: item._id,
+          name: item.name,
+          price: item.price,
+          shopId: item.vendorId?._id || '', // Safely get populated shop ID
+          shopName: item.vendorId?.name || 'Campus Shop', // Get shop name
+          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400",
+          rating: 4.8,
+          isVeg: item.isVeg
+        }));
+
+        setRealShops(mappedShops);
+        setTrendingItems(mappedTrending);
+      } catch (error) {
+        console.error("Failed to fetch home data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  },[]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +69,10 @@ const Home: React.FC = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: '100px' }}><h2>Loading Campus Shops...</h2></div>;
+  }
 
   return (
     <div className="home-page">
@@ -50,32 +95,55 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      <section className="trending-section container">
-        <div className="section-header">
-          <div className="title-with-icon">
-            <TrendingUp size={24} color="#FC8019" />
-            <h2>Trending in Your Campus</h2>
+      {/* Only show trending section if we actually have items */}
+      {trendingItems.length > 0 && (
+        <section className="trending-section container">
+          <div className="section-header">
+            <div className="title-with-icon">
+              <TrendingUp size={24} color="#FC8019" />
+              <h2>Trending in Your Campus</h2>
+            </div>
+            <p>Top sold items this week</p>
           </div>
-          <p>Top sold items this week</p>
-        </div>
-        <div className="trending-carousel">
-          <div className="carousel-track">
-            {[...trendingItems, ...trendingItems].map((item, index) => (
-              <div key={`${item.id}-${index}`} className="trending-card card" onClick={() => navigate(`/menu/${item.shopId}`)}>
-                <img src={item.image} alt={item.name} />
-                <div className="trending-info">
-                  <h4>{item.name}</h4>
-                  <span className="price">₹{item.price}</span>
+          <div className="trending-carousel">
+            <div className="carousel-track">
+              {/* Duplicated for smooth infinite scroll effect (if your CSS does that) */}
+              {[...trendingItems, ...trendingItems].map((item, index) => (
+                <div key={`${item.id}-${index}`} className="trending-card card">
+                  <div className="trending-img-container" onClick={() => navigate(`/menu/${item.shopId}`)}>
+                    <img src={item.image} alt={item.name} />
+                  </div>
+                  <div className="trending-info">
+                    <div className="text" onClick={() => navigate(`/menu/${item.shopId}`)}>
+                      <h4>{item.name}</h4>
+                      <p style={{ fontSize: '0.8rem', color: '#666', margin: '2px 0' }}>{item.shopName}</p>
+                      <div className="trending-meta">
+                        <span className="price">₹{item.price}</span>
+                        <span className="rating"><Star size={12} fill="#48c479" color="#48c479" /> {item.rating}</span>
+                      </div>
+                    </div>
+                    <button 
+                      className={`add-mini-btn ${addedItemId === item.id ? 'added' : ''}`} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item, item.shopId);
+                        setAddedItemId(item.id);
+                        setTimeout(() => setAddedItemId(null), 2000);
+                      }}
+                    >
+                      {addedItemId === item.id ? 'ADDED' : 'ADD'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="shops-section container">
         <div className="section-header">
-          <h2>Campus Shops in {location}</h2>
+          <h2>Campus Shops</h2>
           <div className="filters">
             <button className="filter-chip active">Ratings 4.0+</button>
             <button className="filter-chip">Fastest Delivery</button>
@@ -84,8 +152,8 @@ const Home: React.FC = () => {
         </div>
 
         <div className="shops-grid grid-3">
-          {filteredShops.length > 0 ? (
-            filteredShops.map(shop => (
+          {realShops.length > 0 ? (
+            realShops.map(shop => (
               <div 
                 key={shop.id} 
                 className="shop-card card"
@@ -112,7 +180,7 @@ const Home: React.FC = () => {
                   <div className="popular-items">
                     <span className="label">Popular:</span>
                     <div className="tags">
-                      {shop.popularItems.map(item => <span key={item} className="tag">{item}</span>)}
+                      {shop.popularItems.map((item: string) => <span key={item} className="tag">{item}</span>)}
                     </div>
                   </div>
 
@@ -130,7 +198,7 @@ const Home: React.FC = () => {
             ))
           ) : (
             <div className="no-shops">
-              <p>No shops found in this location. Try changing your building.</p>
+              <p>No shops found on your campus yet.</p>
             </div>
           )}
         </div>
@@ -142,7 +210,7 @@ const Home: React.FC = () => {
           <p>Explore shops across all campus buildings</p>
         </div>
         <div className="shops-scroll">
-          {shops.map(shop => (
+          {realShops.map(shop => (
             <div 
               key={shop.id} 
               className="shop-card-mini card"

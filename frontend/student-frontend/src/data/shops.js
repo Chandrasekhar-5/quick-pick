@@ -10,7 +10,8 @@ export const shops = [
     location: "Campus Building A",
     categories: ["Breakfast", "Lunch", "Snacks", "Beverages"],
     crowdLevel: "High",
-    popularItems: ["Masala Dosa", "Thali Special"]
+    popularItems: ["Masala Dosa", "Thali Special"],
+    phone: "+91 98765 00001"
   },
   {
     id: 2,
@@ -23,7 +24,8 @@ export const shops = [
     location: "Campus Building B",
     categories: ["Beverages", "Snacks"],
     crowdLevel: "Low",
-    popularItems: ["Mango Shake", "Fresh Orange Juice"]
+    popularItems: ["Mango Shake", "Fresh Orange Juice"],
+    phone: "+91 98765 00002"
   },
   {
     id: 3,
@@ -36,7 +38,8 @@ export const shops = [
     location: "Campus Building C",
     categories: ["Snacks", "Beverages"],
     crowdLevel: "Medium",
-    popularItems: ["Veg Cheese Burger", "Paneer Pizza"]
+    popularItems: ["Veg Cheese Burger", "Paneer Pizza"],
+    phone: "+91 98765 00003"
   }
 ];
 

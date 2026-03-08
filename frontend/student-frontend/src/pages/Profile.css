@@ -239,7 +239,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .qr-id-card {
   padding: 25px;
   background: #1e3c72;
-  color: white;
+  color: black;
   text-align: center;
 }
 
@@ -249,22 +249,24 @@ input:checked + .slider:before { transform: translateX(20px); }
   justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 1px;
+  color: black;
 }
-
-.id-header img { width: 30px; height: 30px; border-radius: 4px; }
 
 .qr-box {
   background: white;
   padding: 15px;
   border-radius: 12px;
-  display: inline-block;
-  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 15px;
+  width: fit-content;
 }
 
-.qr-box img { width: 140px; height: 140px; }
+.qr-box img { width: 140px; height: 140px; display: block; }
 
 .id-info h4 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
 .id-info p { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }

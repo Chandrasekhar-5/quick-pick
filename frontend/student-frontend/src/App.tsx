@@ -14,8 +14,23 @@ import OrderHistory from './pages/OrderHistory';
 import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
 
+import SearchResults from './pages/SearchResults';
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useApp();
+  const { user, isLoading } = useApp();
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+      </div>
+    );
+  }
+
   if (!user) return <Navigate to="/" replace />;
   return (
     <>
@@ -42,6 +57,7 @@ const App: React.FC = () => {
           <Route path="/orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
           <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

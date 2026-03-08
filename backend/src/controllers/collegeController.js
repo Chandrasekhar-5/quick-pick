@@ -21,4 +21,19 @@ const createCollege = async (req, res) => {
     }
 };
 
-module.exports = { createCollege };
+const getColleges = async (req, res) => {
+    try {
+        const colleges = await College.find({ isActive: true })
+              .select('name address')
+              .sort('name');
+        res.json({
+            success: true,
+            count: colleges.length,
+            data: colleges
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+module.exports = { createCollege, getColleges };

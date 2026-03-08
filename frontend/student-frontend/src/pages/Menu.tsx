@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, Clock, Search, ChevronRight, ShoppingBag, Plus, Minus, Users } from 'lucide-react';
-import { shops } from '../data/shops';
-import { menuData } from '../data/menuData';
 import { useApp } from '../context/AppContext';
+import API from '../services/api';
 import './Menu.css';
 
 const Menu: React.FC = () => {
@@ -11,14 +10,64 @@ const Menu: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart, cart, updateQuantity } = useApp();
   
-  const shop = shops.find(s => s.id === Number(shopId));
-  const menuItems = menuData[Number(shopId)] || [];
+  const [shop, setShop] = useState<any>(null);
+  const[menuItems, setMenuItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredMenu, setFilteredMenu] = useState(menuItems);
+  const [filteredMenu, setFilteredMenu] = useState<any[]>([]);
   
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    const fetchShopAndMenu = async () => {
+      try {
+        const[vendorsRes, menuRes] = await Promise.all([
+          API.get('/vendors'),
+          API.get(`/menu/${shopId}`)
+        ]);
+
+        const currentShop = vendorsRes.data.find((v: any) => v._id === shopId);
+        
+        if (currentShop) {
+          setShop({
+            id: currentShop._id,
+            name: currentShop.name,
+            description: currentShop.description || 'Delicious food served hot.',
+            rating: 4.5,
+            prepTime: "10-15 min",
+            location: "Main Campus",
+            crowdLevel: "Low",
+            categories:["Snacks", "Beverages", "Main Course"]
+          });
+        }
+
+        const mappedMenu = menuRes.data.map((item: any) => ({
+          id: item._id,
+          name: item.name,
+          price: item.price,
+          description: item.description || '',
+          isVeg: item.isVeg,
+          available: item.isAvailable,
+          category: "Snacks",
+          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400"
+        }));
+
+        setMenuItems(mappedMenu);
+        setFilteredMenu(mappedMenu);
+
+      } catch (error) {
+        console.error("Failed to fetch menu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (shopId) {
+      fetchShopAndMenu();
+    }
+  }, [shopId]);
 
   useEffect(() => {
     let filtered = menuItems;
@@ -34,10 +83,11 @@ const Menu: React.FC = () => {
     setFilteredMenu(filtered);
   }, [searchQuery, activeCategory, menuItems]);
 
-  if (!shop) return <div className="container">Shop not found</div>;
+  if (loading) return <div className="container" style={{ textAlign: 'center', marginTop: '100px' }}><h2>Loading Menu...</h2></div>;
+  if (!shop) return <div className="container" style={{ textAlign: 'center', marginTop: '100px' }}><h2>Shop not found</h2></div>;
 
-  const getItemQuantity = (id: number) => {
-    return cart.find(i => i.id === id)?.quantity || 0;
+  const getItemQuantity = (id: string) => {
+    return cart.find(i => i.id === (id as any))?.quantity || 0;
   };
 
   const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -125,14 +175,14 @@ const Menu: React.FC = () => {
                     <div className="add-btn-container">
                       {getItemQuantity(item.id) > 0 ? (
                         <div className="qty-selector">
-                          <button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
+                          <button onClick={() => updateQuantity(item.id as any, -1)}><Minus size={14} /></button>
                           <span>{getItemQuantity(item.id)}</span>
-                          <button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
+                          <button onClick={() => updateQuantity(item.id as any, 1)}><Plus size={14} /></button>
                         </div>
                       ) : (
                         <button 
                           className="add-btn" 
-                          onClick={() => addToCart(item, shop.id)}
+                          onClick={() => addToCart(item as any, shop.id as any)}
                           disabled={!item.available}
                         >
                           {item.available ? 'ADD' : 'OUT OF STOCK'}
@@ -160,9 +210,9 @@ const Menu: React.FC = () => {
                     </div>
                     <div className="preview-qty-price">
                       <div className="mini-qty">
-                        <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                        <button onClick={() => updateQuantity(item.id as any, -1)}>-</button>
                         <span>{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                        <button onClick={() => updateQuantity(item.id as any, 1)}>+</button>
                       </div>
                       <span>₹{item.price * item.quantity}</span>
                     </div>

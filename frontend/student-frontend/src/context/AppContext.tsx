@@ -1,25 +1,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { campusLocations, shops } from '../data/shops';
+import { campusLocations } from '../data/shops';
+import API from '../services/api';
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  walletBalance: number;
+  studentId: string;
+  rewardPoints: number;
+}
 
 interface CartItem {
-  id: number;
+  id: string; 
   name: string;
   price: number;
   quantity: number;
   image: string;
-  shopId: number;
+  shopId: string; 
 }
 
 interface Order {
   id: string;
-  shopId: number;
+  shopId: string;
   shopName: string;
   items: CartItem[];
   total: number;
-  status: 'confirmed' | 'preparing' | 'ready' | 'picked_up';
+  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'confirmed';
   pickupSlot: string;
   timestamp: string;
   qrCode: string;
+  studentId: string;
+  paymentMethod?: 'wallet' | 'cash';
 }
 
 interface Notification {
@@ -40,23 +53,24 @@ interface Transaction {
 }
 
 interface AppContextType {
-  user: { name: string; walletBalance: number; studentId: string; rewardPoints: number } | null;
+  user: User | null;
+  isLoading: boolean;
   location: string;
   setLocation: (loc: string) => void;
   detectLocation: () => void;
   cart: CartItem[];
-  currentShopId: number | null;
-  setCurrentShopId: (id: number | null) => void;
-  addToCart: (item: any, shopId: number) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, delta: number) => void;
+  currentShopId: string | null;
+  setCurrentShopId: (id: string | null) => void;
+  addToCart: (item: any, shopId: string) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, delta: number) => void;
   clearCart: () => void;
-  login: (name: string) => void;
+  login: (userData: any) => void;
   logout: () => void;
   addFunds: (amount: number) => void;
   deductFunds: (amount: number) => boolean;
   orders: Order[];
-  placeOrder: (order: Omit<Order, 'id' | 'timestamp' | 'qrCode' | 'status'>) => string;
+  placeOrder: (order: any) => string;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   cancelOrder: (orderId: string) => void;
   notifications: Notification[];
@@ -64,55 +78,122 @@ interface AppContextType {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   transactions: Transaction[];
+  refreshOrders: () => void; 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<{ name: string; walletBalance: number; studentId: string; rewardPoints: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [location, setLocation] = useState('Campus Building A');
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [currentShopId, setCurrentShopId] = useState<number | null>(null);
+  const[cart, setCart] = useState<CartItem[]>([]);
+  const [currentShopId, setCurrentShopId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const[transactions, setTransactions] = useState<Transaction[]>([]);
+
+  const fetchMyOrders = async () => {
+    try {
+      const res = await API.get('/orders/myorders');
+      
+      const mappedOrders = res.data.map((dbOrder: any) => ({
+        id: dbOrder._id,
+        shopId: dbOrder.vendorId?._id || 'Unknown',
+        shopName: dbOrder.vendorId?.name || 'Unknown Shop',
+        items: dbOrder.items.map((i: any) => ({
+          id: i.menuItem?._id || 'Unknown',
+          name: i.menuItem?.name || 'Unknown Item',
+          price: i.priceAtOrder, 
+          quantity: i.quantity,
+          isVeg: i.menuItem?.isVeg
+        })),
+        total: dbOrder.totalAmount,
+        status: dbOrder.status.toLowerCase(),
+        pickupSlot: "Standard", 
+        timestamp: dbOrder.createdAt,
+        qrCode: dbOrder._id,
+        studentId: dbOrder.userId
+      }));
+      
+      setOrders(mappedOrders);
+    } catch (err) {
+      console.error("Failed to fetch orders from backend", err);
+    }
+  };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('qp_user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-    
-    const savedOrders = localStorage.getItem('qp_orders');
-    if (savedOrders) setOrders(JSON.parse(savedOrders));
+    const initializeApp = async () => {
+      const token = localStorage.getItem('studentToken');
+      
+      if (token) {
+        try {
+          const userRes = await API.get('/auth/me');
+          
+          setUser({
+            _id: userRes.data._id,
+            name: userRes.data.name,
+            email: userRes.data.email,
+            role: userRes.data.role,
+            walletBalance: 500.00,
+            studentId: userRes.data._id.substring(0, 8).toUpperCase(),
+            rewardPoints: 150
+          });
 
-    const savedNotifications = localStorage.getItem('qp_notifications');
-    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+          await fetchMyOrders();
 
-    const savedTransactions = localStorage.getItem('qp_transactions');
-    if (savedTransactions) setTransactions(JSON.parse(savedTransactions));
-  }, []);
+        } catch (error) {
+          console.error("Session expired or invalid token.");
+          localStorage.removeItem('studentToken');
+        }
+      }
+      
+      const savedNotifications = localStorage.getItem('qp_notifications');
+      if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+
+      const savedTransactions = localStorage.getItem('qp_transactions');
+      if (savedTransactions) setTransactions(JSON.parse(savedTransactions));
+
+      setIsLoading(false);
+    };
+
+    initializeApp();
+  },[]);
 
   const saveToStorage = (key: string, data: any) => {
     localStorage.setItem(key, JSON.stringify(data));
   };
 
-  const login = (name: string) => {
-    const newUser = { name, walletBalance: 500.00, studentId: "STU2024001", rewardPoints: 150 };
+  const login = (userData: any) => {
+    if (userData.role !== "student") {
+      alert("Only students are allowed to login");
+      return;
+    }
+    const newUser: User = {
+      _id: userData._id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      walletBalance: 500.00,
+      studentId: userData._id.substring(0, 8).toUpperCase(),
+      rewardPoints: 150
+    };
     setUser(newUser);
-    saveToStorage('qp_user', newUser);
+    fetchMyOrders(); 
     addNotification("Welcome to QuickPick!", "Start pre-ordering from your favorite campus shops.", "system");
   };
 
   const logout = () => {
     setUser(null);
     setCart([]);
+    setOrders([]);
     setCurrentShopId(null);
-    localStorage.removeItem('qp_user');
+    localStorage.removeItem('studentToken');
   };
 
   const detectLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
-        // Mock logic: find nearest campus building
         const nearest = campusLocations[Math.floor(Math.random() * campusLocations.length)];
         setLocation(nearest.name);
         addNotification("Location Detected", `Automatically set your location to ${nearest.name}`, "system");
@@ -122,12 +203,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addToCart = (item: any, shopId: number) => {
+  const addToCart = (item: any, shopId: string) => {
     if (currentShopId && currentShopId !== shopId) {
       if (!window.confirm("Adding items from a different shop will clear your current cart. Continue?")) {
         return;
       }
-      setCart([]);
+      setCart([{ ...item, quantity: 1, shopId }]);
+      setCurrentShopId(shopId);
+      return;
     }
     setCurrentShopId(shopId);
     setCart(prev => {
@@ -135,11 +218,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (existing) {
         return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { ...item, quantity: 1, shopId }];
+      return[...prev, { ...item, quantity: 1, shopId }];
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart(prev => {
       const updated = prev.filter(i => i.id !== id);
       if (updated.length === 0) setCurrentShopId(null);
@@ -147,7 +230,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: string, delta: number) => {
     setCart(prev => {
       const updated = prev.map(i => {
         if (i.id === id) {
@@ -171,7 +254,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) return;
     const updated = { ...user, walletBalance: user.walletBalance + amount };
     setUser(updated);
-    saveToStorage('qp_user', updated);
     
     const newTxn: Transaction = {
       id: `TXN${Date.now()}`,
@@ -190,16 +272,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deductFunds = (amount: number) => {
     if (!user || user.walletBalance < amount) return false;
     
-    // Calculate reward points (2%)
     const pointsEarned = Math.floor(amount * 0.02);
-    
     const updated = { 
       ...user, 
       walletBalance: user.walletBalance - amount,
       rewardPoints: user.rewardPoints + pointsEarned
     };
     setUser(updated);
-    saveToStorage('qp_user', updated);
 
     const newTxn: Transaction = {
       id: `TXN${Date.now()}`,
@@ -208,7 +287,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       description: 'Payment for order',
       date: new Date().toISOString()
     };
-    const updatedTxns = [newTxn, ...transactions];
+    const updatedTxns =[newTxn, ...transactions];
     setTransactions(updatedTxns);
     saveToStorage('qp_transactions', updatedTxns);
 
@@ -216,58 +295,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const placeOrder = (orderData: any) => {
-    const orderId = `ORD${Math.floor(Math.random() * 90000) + 10000}`;
-    const newOrder: Order = {
-      ...orderData,
-      id: orderId,
-      status: 'confirmed',
-      timestamp: new Date().toISOString(),
-      qrCode: `${orderId}-${user?.studentId}-${Date.now()}`
-    };
-    const updatedOrders = [newOrder, ...orders];
-    setOrders(updatedOrders);
-    saveToStorage('qp_orders', updatedOrders);
-    
-    addNotification("Order Confirmed", `Your order ${orderId} has been placed successfully.`, "order");
-    return orderId;
+    setTimeout(() => {
+       fetchMyOrders(); // Fetch the real order from DB a second later!
+    }, 500);
+    return orderData.id || "processing..."; 
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    try {
+      await API.put(`/orders/${orderId}/status`, { status: 'Cancelled' });
+      
+      const order = orders.find(o => o.id === orderId);
+      if (order && order.paymentMethod === 'wallet') {
+        addFunds(order.total);
+      }
+      
+      addNotification("Order Cancelled", `Order ${orderId} was cancelled successfully.`, "order");
+      fetchMyOrders(); 
+    } catch (error) {
+      console.error("Failed to cancel order", error);
+      alert("Could not cancel order.");
+    }
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    const updatedOrders = orders.map(o => {
-      if (o.id === orderId) {
-        if (status === 'ready' && o.status !== 'ready') {
-          addNotification("Order Ready!", `Your order ${orderId} is ready for pickup.`, "order");
-        }
-        return { ...o, status };
-      }
-      return o;
-    });
-    setOrders(updatedOrders as Order[]);
-    saveToStorage('qp_orders', updatedOrders);
-  };
-
-  const cancelOrder = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (order && order.status === 'confirmed') {
-      // Refund logic
-      addFunds(order.total);
-      const updatedOrders = orders.filter(o => o.id !== orderId);
-      setOrders(updatedOrders);
-      saveToStorage('qp_orders', updatedOrders);
-      addNotification("Order Cancelled", `Order ${orderId} was cancelled and refund processed.`, "order");
-    }
+    fetchMyOrders(); 
   };
 
   const addNotification = (title: string, message: string, type: Notification['type']) => {
     const newNotif: Notification = {
-      id: `NOTIF${Date.now()}`,
-      title,
-      message,
-      timestamp: new Date().toISOString(),
-      read: false,
-      type
+      id: `NOTIF${Date.now()}`, title, message, timestamp: new Date().toISOString(), read: false, type
     };
-    const updated = [newNotif, ...notifications];
+    const updated =[newNotif, ...notifications];
     setNotifications(updated);
     saveToStorage('qp_notifications', updated);
   };
@@ -286,11 +345,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-      user, location, setLocation, detectLocation, cart, currentShopId, setCurrentShopId, 
+      user, isLoading, location, setLocation, detectLocation, cart, currentShopId, setCurrentShopId, 
       addToCart, removeFromCart, updateQuantity, clearCart, login, logout, 
       addFunds, deductFunds, orders, placeOrder, updateOrderStatus, cancelOrder,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead,
-      transactions
+      transactions, refreshOrders: fetchMyOrders
     }}>
       {children}
     </AppContext.Provider>
