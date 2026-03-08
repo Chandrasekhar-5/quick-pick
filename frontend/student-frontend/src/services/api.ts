@@ -1,23 +1,22 @@
-import axios from 'axios';
-import { error } from 'console';
+import axios from "axios";
 
 const API = axios.create({
-    baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
-
 API.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('studentToken');
+  (config) => {
+    const token = localStorage.getItem("studentToken");
 
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default API;
