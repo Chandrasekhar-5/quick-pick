@@ -21,6 +21,8 @@ const OrderTracking: React.FC = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { orders, updateOrderStatus, cancelOrder, user } = useApp();
+
+  console.log("Order ID:", orderId);
   
   const order = orders.find(o => o.id === orderId);
   const shop = shops.find(s => s.name === order?.shopName);
