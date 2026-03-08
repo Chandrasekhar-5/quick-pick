@@ -57,64 +57,54 @@ const Cart: React.FC = () => {
   ].filter(item => !cart.find(c => c.name === item.name));
 
   const handlePlaceOrder = async () => {
-    if (!user) return navigate('/');
-    if (paymentMethod === 'wallet' && user.walletBalance < total) {
-      setError('Insufficient wallet balance. Please add funds.');
-      return;
-    }
+  if (!user) return navigate('/');
+  if (paymentMethod === 'wallet' && user.walletBalance < total) {
+    setError('Insufficient wallet balance. Please add funds.');
+    return;
+  }
 
-    setIsProcessing(true);
-    setError('');
+  setIsProcessing(true);
+  setError('');
 
-    try {
-      const backendItems = cart.map(item => {
-        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(item.id.toString());
-        
-        if (!isValidObjectId) {
-          console.warn(`Item ${item.id} is not a valid ObjectId. Make sure your cart items have real MongoDB IDs.`);
-        }
-        
-        return {
-          menuItem: item.id,
-          quantity: item.quantity
-        };
-      });
-
-      // Make the real POST request to our database!
-      const response = await API.post('/orders', {
-        vendorId: currentShopId,
-        items: backendItems,
-        // Optional: If you want to send payment method to backend later, you can add it here!
-      });
-
-      console.log("Real Order Created in DB!", response.data);
-
-      if (paymentMethod === 'wallet') deductFunds(total);
-
-      // Trigger the frontend's local tracking flow AND save the paymentMethod
-      const mockOrderId = placeOrder({
-        shopId: currentShopId as any,
-        shopName: realShop.name, // USE REAL NAME
-        items: cart,
-        total,
-        pickupSlot: selectedSlot,
-        paymentMethod: paymentMethod // FIX: Pass payment method so cancelOrder knows!
-      } as any); // Cast as any to avoid strict TS errors for the new field
-
-      setIsSuccess(true);
-      clearCart();
-      setIsProcessing(false);
+  try {
+    const backendItems = cart.map(item => {
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(item.id.toString());
       
-      setTimeout(() => {
-        navigate(`/order-tracking/${mockOrderId}`);
-      }, 2000);
+      if (!isValidObjectId) {
+        console.warn(`Item ${item.id} is not a valid ObjectId. Make sure your cart items have real MongoDB IDs.`);
+      }
+      
+      return {
+        menuItem: item.id,
+        quantity: item.quantity
+      };
+    });
 
-    } catch (err: any) {
-      console.error("Failed to place order:", err);
-      setError(err.response?.data?.message || 'Failed to place order with backend.');
-      setIsProcessing(false);
-    }
-  };
+    const response = await API.post('/orders', {
+      vendorId: currentShopId,
+      items: backendItems,
+    });
+
+    console.log("Real Order Created in DB!", response.data);
+
+    if (paymentMethod === 'wallet') deductFunds(total);
+
+    const orderId = placeOrder(response.data);
+
+    setIsSuccess(true);
+    clearCart();
+    setIsProcessing(false);
+    
+    setTimeout(() => {
+      navigate(`/order-tracking/${orderId}`);
+    }, 2000);
+
+  } catch (err: any) {
+    console.error("Failed to place order:", err);
+    setError(err.response?.data?.message || 'Failed to place order with backend.');
+    setIsProcessing(false);
+  }
+};
 
   if (cart.length === 0) {
     return (

@@ -19,7 +19,7 @@ connectDB();
 
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? 'https://frontend-domain.com'
+        ? 'https://quick-pick-student.vercel.app'
         : 'http://localhost:3000',
     credentials: true
 }));

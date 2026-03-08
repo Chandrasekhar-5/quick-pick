@@ -295,10 +295,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const placeOrder = (orderData: any) => {
+    console.log("Data passed to placeOrder:", orderData);
+
+    const extractedId = orderData?._id || orderData?.id;
+  
+  if (!extractedId) {
+    console.error("❌ COULD NOT FIND ORDER ID! Look at the 'Data passed to placeOrder' log above to see where the _id is hiding.");
+    return "processing...";
+  }
+
     setTimeout(() => {
-       fetchMyOrders(); // Fetch the real order from DB a second later!
+       fetchMyOrders(); 
     }, 500);
-    return orderData.id || "processing..."; 
+
+    return extractedId; 
   };
 
   const cancelOrder = async (orderId: string) => {
