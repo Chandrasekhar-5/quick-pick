@@ -3,7 +3,9 @@
 ![Node.js](https://img.shields.io/badge/Backend-Node.js-green)
 ![React](https://img.shields.io/badge/Frontend-React-blue)
 ![MongoDB](https://img.shields.io/badge/Database-MongoDB-darkgreen)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![License](https://img.shields.io/badge/License-Proprietary-red)
+
+Private software. Unauthorized use or redistribution is prohibited.
 
 
 QuickPick Campus is a multi-tenant food ordering and analytics platform designed for college campuses. The system allows students to order food from campus vendors while enabling vendors and administrators to manage operations and view analytics.
