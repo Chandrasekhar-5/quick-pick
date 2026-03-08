@@ -43,4 +43,19 @@ const getMenuItemsByVendor = async (req, res, next) => {
     }
 };
 
-module.exports = { addMenuItem, getMenuItemsByVendor };
+const getTrendingItems = async (req, res) => {
+    try {
+        const campusVendors = await Vendor.find({ collegeId: req.user.college }).select('_id');
+
+        const vendorIds = campusVendors.map(vendor => vendor._id);
+        const trendingItems = await MenuItem.find({ vendorId: { $in: vendorIds } })
+            .populate('vendorId', 'name')
+            .limit(8);
+
+        res.status(200).json(trendingItems);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { addMenuItem, getMenuItemsByVendor, getTrendingItems };
