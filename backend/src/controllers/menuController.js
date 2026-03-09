@@ -3,7 +3,7 @@ const Vendor = require("../models/Vendor");
 
 const addMenuItem = async (req, res, next) => {
     try {
-        const { name, price, description, isVeg, isAvailable } = req.body;
+        const { name, price, description, isVeg, isAvailable, image } = req.body;
         const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
 
         if (!vendorShop) {
@@ -16,6 +16,7 @@ const addMenuItem = async (req, res, next) => {
             description,
             isVeg,
             isAvailable,
+            image,
             vendorId: vendorShop._id
         });
         
