@@ -23,6 +23,7 @@ export default function VendorMenu() {
   const[isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +51,7 @@ export default function VendorMenu() {
         category: "Snacks",
         isAvailable: item.isAvailable,
         stock: 50,
-        image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400"
+        image: item.image
       }));
 
       setMenu(mappedMenu);
@@ -82,15 +83,27 @@ export default function VendorMenu() {
     setIsModalOpen(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    setIsUploadingImage(true);
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+
+      const response = await API.post('/upload', uploadData, {
+        headers: { 'Context-Type': 'multipart/form-data' }
+      });
+
+      setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }    
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,7 +119,8 @@ export default function VendorMenu() {
           price: formData.price,
           description: formData.description,
           isVeg: true, 
-          isAvailable: formData.isAvailable
+          isAvailable: formData.isAvailable,
+          image: formData.image
         });
         
         await fetchMenu();
@@ -297,8 +311,10 @@ export default function VendorMenu() {
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Item Image</label>
                   <div className="flex items-center gap-4">
                     <div className="w-24 h-24 bg-gray-100 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-700 overflow-hidden flex items-center justify-center">
-                      {formData.image ? (
-                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      {isUploadingImage ? (
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                      ) : formData.image ? (
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
                       ) : (
                         <Upload className="w-6 h-6 text-gray-400" />
                       )}
