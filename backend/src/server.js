@@ -12,6 +12,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const swaggerSpec = require("./config/swagger");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 
@@ -33,6 +34,9 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api/upload", uploadRoutes);
+
+
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "success", message: "Quick pick api is running successfully" });
