@@ -4,81 +4,86 @@ import { Search, Calendar, Download, Clock } from 'lucide-react';
 import { Order, OrderStatus } from '../types.ts';
 import OrderCard from '../components/vendor/OrderCard.tsx';
 import { motion, AnimatePresence } from 'motion/react';
+import API from '../services/api'; // NEW: Import API
 
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 'ORD-001',
-    customerName: 'Rahul Sharma',
-    items: [
-      { id: '1', name: 'Veg Burger', quantity: 2, price: 80 },
-      { id: '2', name: 'Cold Coffee', quantity: 1, price: 60 },
-    ],
-    total: 220,
-    status: OrderStatus.PREPARING,
-    timestamp: '2024-03-01T10:30:00Z',
-    pickupTime: '11:15 AM',
-  },
-  {
-    id: 'ORD-002',
-    customerName: 'Priya Patel',
-    items: [
-      { id: '3', name: 'Paneer Tikka Sandwich', quantity: 1, price: 120 },
-      { id: '4', name: 'Masala Tea', quantity: 2, price: 20 },
-    ],
-    total: 160,
-    status: OrderStatus.READY,
-    timestamp: '2024-03-01T10:45:00Z',
-    pickupTime: '11:30 AM',
-  },
-  {
-    id: 'ORD-003',
-    customerName: 'Amit Kumar',
-    items: [
-      { id: '5', name: 'French Fries', quantity: 1, price: 70 },
-      { id: '6', name: 'Pasta Arrabbiata', quantity: 1, price: 150 },
-    ],
-    total: 220,
-    status: OrderStatus.COMPLETED,
-    timestamp: '2024-03-01T09:15:00Z',
-    pickupTime: '10:00 AM',
-  },
-  {
-    id: 'ORD-004',
-    customerName: 'Sneha Gupta',
-    items: [
-      { id: '1', name: 'Veg Burger', quantity: 1, price: 80 },
-      { id: '4', name: 'Masala Tea', quantity: 1, price: 20 },
-    ],
-    total: 100,
-    status: OrderStatus.CANCELLED,
-    timestamp: '2024-03-01T09:30:00Z',
-    pickupTime: '10:15 AM',
-  },
-];
-
-const statuses = ['All', OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.COMPLETED, OrderStatus.CANCELLED];
+const statuses =['All', OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.COMPLETED, OrderStatus.CANCELLED];
 
 export default function VendorOrders() {
   const location = useLocation();
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]); 
   const [activeStatus, setActiveStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const[isLoading, setIsLoading] = useState(true);
+
+  
+  const fetchOrders = async () => {
+    try {
+      const response = await API.get('/orders/vendor-orders');
+      
+      const mappedOrders = response.data.map((dbOrder: any) => {
+  console.log("Backend status:", dbOrder.status); // <-- add here
+
+  return {
+    id: dbOrder._id,
+    customerName: dbOrder.userId?.name || 'Unknown Customer',
+    items: dbOrder.items.map((i: any) => ({
+      id: i.menuItem?._id || Math.random().toString(),
+      name: i.menuItem?.name || 'Unknown Item',
+      quantity: i.quantity,
+      price: i.priceAtOrder
+    })),
+    total: dbOrder.totalAmount,
+    status: dbOrder.status as OrderStatus, // normalize casing
+    timestamp: dbOrder.createdAt,
+    pickupTime: "Standard",
+  };
+});
+console.log("mapped status:", mappedOrders[0].status);
+
+
+      setOrders(mappedOrders);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+
+    // Optional: Refresh orders every 30 seconds to simulate real-time
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  },[]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get('q');
-    if (q) {
-      setSearchQuery(q);
-    }
+    if (q) setSearchQuery(q);
   }, [location.search]);
 
-  const handleStatusChange = (id: string, status: OrderStatus) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  // NEW: Update status in the REAL database
+  const handleStatusChange = async (id: string, status: OrderStatus) => {
+    try {
+      // 1. Optimistic UI Update (Update screen instantly)
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+      
+      // 2. Network Request
+      await API.put(`/orders/${id}/status`, { status });
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update status. Reverting.");
+      fetchOrders(); // Revert to real DB state if it fails
+    }
   };
 
-  const handleCancel = (id: string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: OrderStatus.CANCELLED } : o));
+  const handleCancel = async (id: string) => {
+    await handleStatusChange(id, OrderStatus.CANCELLED);
   };
 
   const handleExport = () => {
@@ -102,10 +107,17 @@ export default function VendorOrders() {
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = activeStatus === 'All' || order.status === activeStatus;
-    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+    const safeCustomerName = order.customerName || '';
+    const safeOrderId = order.id || '';
+    
+    const matchesSearch = safeOrderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         safeCustomerName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Clock className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -122,9 +134,9 @@ export default function VendorOrders() {
               className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm dark:text-white"
             />
           </div>
-          <button className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-            <Calendar className="w-5 h-5" />
-            <span className="hidden sm:inline font-medium">Today</span>
+          <button onClick={fetchOrders} className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+            <Clock className="w-5 h-5" />
+            <span className="hidden sm:inline font-medium">Refresh</span>
           </button>
         </div>
 
@@ -134,9 +146,7 @@ export default function VendorOrders() {
           className="flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold px-6 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm disabled:opacity-70"
         >
           {isExporting ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
-              <Clock className="w-5 h-5" />
-            </motion.div>
+             <Clock className="w-5 h-5 animate-spin" />
           ) : (
             <Download className="w-5 h-5" />
           )}
