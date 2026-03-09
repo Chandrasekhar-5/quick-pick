@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { Utensils, Mail, Lock, User, Store, Phone, ArrowRight, Loader2 } from 'lucide-react';
+import { Utensils, Mail, Lock, User, Store, Phone, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Register() {
@@ -13,17 +13,27 @@ export default function Register() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(''); // Add error state
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
+    
     try {
-      await register(formData);
+      // Add role to the registration data
+      const registrationData = {
+        ...formData,
+        role: 'vendor' // Explicitly set the role
+      };
+      
+      await register(registrationData);
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
+      setError(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +54,16 @@ export default function Register() {
           <p className="text-gray-500 dark:text-gray-400">Join QuickPick and digitize your canteen operations</p>
         </div>
 
+        {/* Add error display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <p className="text-sm text-red-700 font-medium">{error}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ... rest of your form fields remain the same ... */}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">Canteen Name</label>
             <div className="relative">
