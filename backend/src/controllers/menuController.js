@@ -3,7 +3,7 @@ const Vendor = require("../models/Vendor");
 
 const addMenuItem = async (req, res, next) => {
     try {
-        const { name, price, description, isVeg, isAvailable } = req.body;
+        const { name, price, description, isVeg, isAvailable, image } = req.body;
         const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
 
         if (!vendorShop) {
@@ -16,10 +16,29 @@ const addMenuItem = async (req, res, next) => {
             description,
             isVeg,
             isAvailable,
+            image,
             vendorId: vendorShop._id
         });
         
         res.status(201).json(menuItem);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const updateMenuItem = async (req, res, next) => {
+    try {
+        const updatedItem = await MenuItem.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { returnDocument: "after" }
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ message: "Menu item not found" });
+        }
+
+        res.status(200).json(updatedItem);
     } catch (error) {
         next(error);
     }
@@ -58,4 +77,4 @@ const getTrendingItems = async (req, res) => {
     }
 };
 
-module.exports = { addMenuItem, getMenuItemsByVendor, getTrendingItems };
+module.exports = { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems };

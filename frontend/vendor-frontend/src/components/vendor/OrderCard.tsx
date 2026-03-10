@@ -72,6 +72,7 @@ export default function OrderCard({ order, onStatusChange, onCancel }: OrderCard
         <span className="text-xl font-bold text-gray-900 dark:text-white">₹{order.total}</span>
       </div>
 
+{/* after the order status is set to preparing in student-frontend, remove comments for this
       <div className="flex gap-3">
         {order.status === OrderStatus.PREPARING && (
           <button
@@ -101,6 +102,53 @@ export default function OrderCard({ order, onStatusChange, onCancel }: OrderCard
           </button>
         )}
       </div>
+*/}
+
+
+{/* after the order status is set to preparing in student-frontend, remove this code */}
+
+<div className="flex gap-3">
+  {order.status === OrderStatus.PENDING && (
+    <button
+      onClick={() => onStatusChange(order.id, OrderStatus.PREPARING)}
+      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+    >
+      <CheckCircle2 className="w-5 h-5" />
+      Start Preparing
+    </button>
+  )}
+  {order.status === OrderStatus.PREPARING && (
+    <button
+      onClick={() => onStatusChange(order.id, OrderStatus.READY)}
+      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+    >
+      <CheckCircle2 className="w-5 h-5" />
+      Mark Ready
+    </button>
+  )}
+  {order.status === OrderStatus.READY && (
+    <button
+      onClick={() => onStatusChange(order.id, OrderStatus.COMPLETED)}
+      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+    >
+      <CheckCircle2 className="w-5 h-5" />
+      Complete Order
+    </button>
+  )}
+  {(order.status === OrderStatus.PENDING || 
+    order.status === OrderStatus.PREPARING || 
+    order.status === OrderStatus.READY) && (
+    <button
+      onClick={() => onCancel(order.id)}
+      className="p-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl transition-all"
+      title="Cancel Order"
+    >
+      <XCircle className="w-6 h-6" />
+    </button>
+  )}
+</div>
+
+
     </motion.div>
   );
 }
