@@ -46,7 +46,7 @@ const Home: React.FC = () => {
           price: item.price,
           shopId: item.vendorId?._id || '', // Safely get populated shop ID
           shopName: item.vendorId?.name || 'Campus Shop', // Get shop name
-          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400",
+          image: item.image,
           rating: 4.8,
           isVeg: item.isVeg
         }));
