@@ -26,6 +26,24 @@ const addMenuItem = async (req, res, next) => {
     }
 };
 
+const updateMenuItem = async (req, res, next) => {
+    try {
+        const updatedItem = await MenuItem.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { returnDocument: "after" }
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ message: "Menu item not found" });
+        }
+
+        res.status(200).json(updatedItem);
+    } catch (error) {
+        next(error);
+    }
+};
+
 const getMenuItemsByVendor = async (req, res, next) => {
     try {
         const vendorId = req.params.vendorId;
@@ -59,4 +77,4 @@ const getTrendingItems = async (req, res) => {
     }
 };
 
-module.exports = { addMenuItem, getMenuItemsByVendor, getTrendingItems };
+module.exports = { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems };

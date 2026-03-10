@@ -48,7 +48,7 @@ export default function VendorMenu() {
         name: item.name,
         price: item.price,
         description: item.description || '',
-        category: "Snacks",
+        category: item.category || "Snacks",
         isAvailable: item.isAvailable,
         stock: 50,
         image: item.image
@@ -94,7 +94,7 @@ export default function VendorMenu() {
       uploadData.append('image', file);
 
       const response = await API.post('/upload', uploadData, {
-        headers: { 'Context-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
@@ -112,8 +112,9 @@ export default function VendorMenu() {
     
     try {
       if (editingItem) {
-        setMenu(prev => prev.map(item => item.id === editingItem.id ? { ...item, ...formData } as MenuItem : item));
-      } else {
+  await API.put(`/menu/${editingItem.id}`, formData);
+  await fetchMenu();
+} else {
         await API.post('/menu', {
           name: formData.name,
           price: formData.price,
@@ -125,6 +126,12 @@ export default function VendorMenu() {
         
         await fetchMenu();
       }
+
+      if (!formData.image) {
+  alert("Please wait for the image to finish uploading.");
+  setIsSubmitting(false);
+  return;
+}
       setIsModalOpen(false);
     } catch (error) {
       console.error("Failed to save item:", error);
