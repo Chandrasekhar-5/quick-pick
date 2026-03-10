@@ -14,6 +14,10 @@ const menuItemSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Please add description']
         },
+        image: {
+            type: String,
+            required: [true, 'Please add an image']
+        },
         isVeg: {
             type: Boolean,
             default: true

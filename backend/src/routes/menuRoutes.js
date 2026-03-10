@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addMenuItem, getMenuItemsByVendor, getTrendingItems } = require('../controllers/menuController');
+const { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems } = require('../controllers/menuController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 
@@ -41,6 +41,9 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
  */
 
 router.post('/', protect, authorize('vendor'), addMenuItem);
+
+
+router.put('/:id', protect, authorize('vendor'), updateMenuItem);
 
 
 router.get('/campus/trending', protect, getTrendingItems);
