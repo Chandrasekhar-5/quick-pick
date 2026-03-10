@@ -1,153 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus, Search, SlidersHorizontal, X, Upload, Loader2, Trash2 } from 'lucide-react';
 import { MenuItem } from '../types.ts';
 import MenuItemCard from '../components/vendor/MenuItemCard.tsx';
 import { motion, AnimatePresence } from "framer-motion";
+import API from '../services/api'; 
+import { useAuth } from '../contexts/AuthContext.tsx'; 
 
-const MOCK_MENU: MenuItem[] = [
-  {
-    id: "101",
-    name: "Masala Dosa",
-    price: 45,
-    description: "Crispy rice crepe filled with spiced potato.",
-    category: "Breakfast",
-    isAvailable: true,
-    stock: 40,
-    image: "https://vismaifood.com/storage/app/uploads/public/8b4/19e/427/thumb__700_0_0_0_auto.jpg"
-  },
-  {
-    id: "102",
-    name: "Chole Bhature",
-    price: 60,
-    description: "Spicy chickpeas served with fried bread.",
-    category: "Breakfast",
-    isAvailable: true,
-    stock: 35,
-    image: "https://static.toiimg.com/thumb/53314156.cms?imgsize=1762111&width=800&height=800"
-  },
-  {
-    id: "103",
-    name: "Thali Special",
-    price: 120,
-    description: "Full meal with rice, dal, 2 sabzi, roti, and curd.",
-    category: "Main Course",
-    isAvailable: true,
-    stock: 20,
-    image: "https://www.shutterstock.com/image-photo/veg-thali-traditional-indian-meal-600nw-2652923019.jpg"
-  },
-  {
-    id: "104",
-    name: "Veg Biryani",
-    price: 90,
-    description: "Fragrant basmati rice cooked with vegetables.",
-    category: "Main Course",
-    isAvailable: true,
-    stock: 30,
-    image: "https://i.pinimg.com/474x/b6/0c/a5/b60ca58bc5c72d11a9679898d9deb006.jpg"
-  },
-  {
-    id: "105",
-    name: "Samosa (2pcs)",
-    price: 20,
-    description: "Crispy pastry filled with spiced potatoes.",
-    category: "Snacks",
-    isAvailable: true,
-    stock: 60,
-    image: "https://doabafoodstracy.com/cdn/shop/files/samoose.png?v=1744281404"
-  },
-  {
-    id: "106",
-    name: "Cold Coffee",
-    price: 40,
-    description: "Chilled creamy coffee with chocolate syrup.",
-    category: "Beverages",
-    isAvailable: true,
-    stock: 50,
-    image: "https://i.pinimg.com/564x/cc/cb/00/cccb00473890ed242fff3e0c66d3ff33.jpg"
-  },
-  {
-    id: "201",
-    name: "Fresh Orange Juice",
-    price: 50,
-    description: "Freshly squeezed oranges.",
-    category: "Beverages",
-    isAvailable: true,
-    stock: 25,
-    image: "https://i.pinimg.com/474x/60/14/a1/6014a17d82605ce570a784c97d311913.jpg"
-  },
-  {
-    id: "202",
-    name: "Mango Shake",
-    price: 60,
-    description: "Thick mango pulp blended with milk.",
-    category: "Beverages",
-    isAvailable: true,
-    stock: 25,
-    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQa1Q0At4X0lc0dd-Z5uV4iXp_spqdEe5rzSA&s"
-  },
-  {
-    id: "203",
-    name: "Fruit Salad",
-    price: 70,
-    description: "Assorted seasonal fresh fruits.",
-    category: "Snacks",
-    isAvailable: true,
-    stock: 20,
-    image: "https://static.vecteezy.com/system/resources/thumbnails/031/426/345/small/bowl-of-healthy-fresh-fruit-salad-ai-generated-photo.jpeg"
-  },
-  {
-    id: "204",
-    name: "Watermelon Juice",
-    price: 40,
-    description: "Refreshing watermelon juice.",
-    category: "Beverages",
-    isAvailable: false,
-    stock: 0,
-    image: "https://png.pngtree.com/png-vector/20240904/ourlarge/pngtree-realistic-watermelon-fruit-juice-png-image_13749191.png"
-  },
-  {
-    id: "301",
-    name: "Veg Cheese Burger",
-    price: 80,
-    description: "Classic veg patty with extra cheese.",
-    category: "Snacks",
-    isAvailable: true,
-    stock: 30,
-    image: "https://i.pinimg.com/736x/75/bb/bb/75bbbb36ed0002e96dcca2475ec48664.jpg"
-  },
-  {
-    id: "302",
-    name: "Paneer Pizza",
-    price: 150,
-    description: "Thin crust pizza topped with paneer.",
-    category: "Snacks",
-    isAvailable: true,
-    stock: 15,
-    image: "https://i.pinimg.com/236x/f2/bf/f4/f2bff49a8acfb847aaa0f4490f7e5473.jpg"
-  },
-  {
-    id: "303",
-    name: "French Fries",
-    price: 60,
-    description: "Crispy golden potato fries.",
-    category: "Snacks",
-    isAvailable: true,
-    stock: 40,
-    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6RGdL32iNxIOVb5ZpwEWyVcnxkQGWFqeWyw&s"
-  },
-  {
-    id: "304",
-    name: "Coke (500ml)",
-    price: 40,
-    description: "Chilled Coca-Cola bottle.",
-    category: "Beverages",
-    isAvailable: true,
-    stock: 50,
-    image: "https://i.pinimg.com/236x/f2/91/08/f2910804dc5b83b780f21d5d8ecb496d.jpg"
-  }
-];
-
-const categories = [
+const categories =[
   'All',
   'Breakfast',
   'Snacks',
@@ -157,14 +16,15 @@ const categories = [
 ];
 
 export default function VendorMenu() {
-  const [menu, setMenu] = useState<MenuItem[]>(MOCK_MENU);
+  const { vendor } = useAuth(); 
+  const[menu, setMenu] = useState<MenuItem[]>([]); 
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const[isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,6 +37,32 @@ export default function VendorMenu() {
     stock: 0,
     image: '',
   });
+
+  const fetchMenu = async () => {
+    if (!vendor?.id) return;
+    try {
+      const response = await API.get(`/menu/${vendor.id}`);
+      
+      const mappedMenu = response.data.map((item: any) => ({
+        id: item._id,
+        name: item.name,
+        price: item.price,
+        description: item.description || '',
+        category: item.category || "Snacks",
+        isAvailable: item.isAvailable,
+        stock: 50,
+        image: item.image
+      }));
+
+      setMenu(mappedMenu);
+    } catch (error) {
+      console.error("Failed to fetch menu:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenu();
+  }, [vendor]);
 
   const handleToggleAvailability = (id: string) => {
     setMenu(prev => prev.map(item =>
@@ -191,47 +77,68 @@ export default function VendorMenu() {
     } else {
       setEditingItem(null);
       setFormData({
-        name: '',
-        price: 0,
-        description: '',
-        category: 'Snacks',
-        isAvailable: true,
-        stock: 0,
-        image: '',
+        name: '', price: 0, description: '', category: 'Snacks', isAvailable: true, stock: 50, image: '',
       });
     }
     setIsModalOpen(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    setIsUploadingImage(true);
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+
+      const response = await API.post('/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }    
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
       if (editingItem) {
-        setMenu(prev => prev.map(item => item.id === editingItem.id ? { ...item, ...formData } as MenuItem : item));
-      } else {
-        const newItem: MenuItem = {
-          ...formData,
-          id: Math.random().toString(36).slice(2, 11),
-        } as MenuItem;
-        setMenu(prev => [newItem, ...prev]);
+  await API.put(`/menu/${editingItem.id}`, formData);
+  await fetchMenu();
+} else {
+        await API.post('/menu', {
+          name: formData.name,
+          price: formData.price,
+          description: formData.description,
+          isVeg: true, 
+          isAvailable: formData.isAvailable,
+          image: formData.image
+        });
+        
+        await fetchMenu();
       }
-      setIsSubmitting(false);
+
+      if (!formData.image) {
+  alert("Please wait for the image to finish uploading.");
+  setIsSubmitting(false);
+  return;
+}
       setIsModalOpen(false);
-    }, 800);
+    } catch (error) {
+      console.error("Failed to save item:", error);
+      alert("Failed to save menu item");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const confirmDelete = (id: string) => {
@@ -411,8 +318,10 @@ export default function VendorMenu() {
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Item Image</label>
                   <div className="flex items-center gap-4">
                     <div className="w-24 h-24 bg-gray-100 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-700 overflow-hidden flex items-center justify-center">
-                      {formData.image ? (
-                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      {isUploadingImage ? (
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                      ) : formData.image ? (
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
                       ) : (
                         <Upload className="w-6 h-6 text-gray-400" />
                       )}
@@ -436,29 +345,29 @@ export default function VendorMenu() {
                     </div>
                   </div>
                 </div>
-              <div className="p-6 border-t border-line dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 flex gap-4">
-  <button
-    type="button"
-    onClick={() => setIsModalOpen(false)}
-    className="flex-1 px-6 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all"
-  >
-    Cancel
-  </button>
+                
+                <div className="p-6 border-t border-line dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 px-6 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Cancel
+                  </button>
 
-  <button
-    type="submit"
-    disabled={isSubmitting}
-    className="flex-1 px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 flex items-center justify-center gap-2"
-  >
-    {isSubmitting ? (
-      <Loader2 className="w-5 h-5 animate-spin" />
-    ) : (
-      editingItem ? "Save Changes" : "Add Item"
-    )}
-  </button>
-</div>
-</form>
-
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      editingItem ? "Save Changes" : "Add Item"
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
@@ -511,7 +420,7 @@ export default function VendorMenu() {
             <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
           </div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">No items found</h3>
-          <p className="dark:text-gray-400">Try adjusting your search or filter to find what you're looking for.</p>
+          <p className="dark:text-gray-400">Click the "Add New Item" button to populate your menu.</p>
         </div>
       )}
     </div>

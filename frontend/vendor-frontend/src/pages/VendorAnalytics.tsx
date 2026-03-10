@@ -1,46 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
-  TrendingUp,
-  DollarSign,
-  ShoppingBag,
-  Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-  Download
+  TrendingUp, DollarSign, ShoppingBag, Clock, ArrowUpRight, ArrowDownRight, Download
 } from 'lucide-react';
 import RevenueChart from '../components/vendor/RevenueChart.tsx';
 import { RevenueData } from '../types.ts';
+import API from '../services/api';
 
-const MOCK_REVENUE_WEEKLY: RevenueData[] = [
-  { date: 'Mon', amount: 4500 },
-  { date: 'Tue', amount: 5200 },
-  { date: 'Wed', amount: 4800 },
-  { date: 'Thu', amount: 6100 },
-  { date: 'Fri', amount: 5900 },
-  { date: 'Sat', amount: 7200 },
-  { date: 'Sun', amount: 6800 },
+const MOCK_REVENUE_WEEKLY: RevenueData[] =[
+  { date: 'Mon', amount: 4500 }, { date: 'Tue', amount: 5200 }, { date: 'Wed', amount: 4800 },
+  { date: 'Thu', amount: 6100 }, { date: 'Fri', amount: 5900 }, { date: 'Sat', amount: 7200 }, { date: 'Sun', amount: 6800 },
 ];
-
-const MOCK_REVENUE_MONTHLY: RevenueData[] = [
-  { date: 'Week 1', amount: 28000 },
-  { date: 'Week 2', amount: 32000 },
-  { date: 'Week 3', amount: 30500 },
-  { date: 'Week 4', amount: 35000 },
+const MOCK_REVENUE_MONTHLY: RevenueData[] =[
+  { date: 'Week 1', amount: 28000 }, { date: 'Week 2', amount: 32000 }, { date: 'Week 3', amount: 30500 }, { date: 'Week 4', amount: 35000 },
 ];
-
-const MOCK_REVENUE_ANNUAL: RevenueData[] = [
-  { date: 'Jan', amount: 120000 },
-  { date: 'Feb', amount: 135000 },
-  { date: 'Mar', amount: 142000 },
-  { date: 'Apr', amount: 128000 },
-  { date: 'May', amount: 155000 },
-  { date: 'Jun', amount: 160000 },
+const MOCK_REVENUE_ANNUAL: RevenueData[] =[
+  { date: 'Jan', amount: 120000 }, { date: 'Feb', amount: 135000 }, { date: 'Mar', amount: 142000 },
+  { date: 'Apr', amount: 128000 }, { date: 'May', amount: 155000 }, { date: 'Jun', amount: 160000 },
 ];
 
 export default function VendorAnalytics() {
   const [timeRange, setTimeRange] = useState<'weekly' | 'monthly' | 'annual'>('weekly');
-  const [isExporting, setIsExporting] = useState(false);
+  const[isExporting, setIsExporting] = useState(false);
+  
+  const [realStats, setRealStats] = useState({ totalRevenue: 0, totalOrders: 0 });
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await API.get('/analytics/vendor');
+        if (response.data) {
+          setRealStats({
+            totalRevenue: response.data.totalRevenue || 0,
+            totalOrders: response.data.totalOrders || 0
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch analytics:", error);
+      }
+    };
+    fetchAnalytics();
+  },[]);
 
   const getChartData = () => {
     switch (timeRange) {
@@ -52,47 +52,45 @@ export default function VendorAnalytics() {
   };
 
   const getStats = () => {
-    switch (timeRange) {
-      case 'weekly':
-        return [
-          { label: 'Weekly Revenue', value: '₹40,500', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: '+15.2%', isUp: true },
-          { label: 'Weekly Orders', value: '450', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: '+8.4%', isUp: true },
-          { label: 'Avg. Order Value', value: '₹90', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: '-2.1%', isUp: false },
-          { label: 'Peak Hour', value: '1:00 PM', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Lunch', isUp: true },
-        ];
-      case 'monthly':
-        return [
-          { label: 'Monthly Revenue', value: '₹1,25,500', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: '+10.5%', isUp: true },
-          { label: 'Monthly Orders', value: '1,380', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: '+5.2%', isUp: true },
-          { label: 'Avg. Order Value', value: '₹91', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: '+1.2%', isUp: true },
-          { label: 'Peak Day', value: 'Friday', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Weekend', isUp: true },
-        ];
-      case 'annual':
-        return [
-          { label: 'Annual Revenue', value: '₹15,40,500', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: '+22.1%', isUp: true },
-          { label: 'Annual Orders', value: '16,450', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: '+18.4%', isUp: true },
-          { label: 'Avg. Order Value', value: '₹94', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: '+4.1%', isUp: true },
-          { label: 'Peak Month', value: 'December', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Festive', isUp: true },
-        ];
-      default:
-        return [];
+    if (timeRange === 'weekly') {
+      return[
+        { label: 'Total Revenue', value: `₹${realStats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: 'Live', isUp: true },
+        { label: 'Total Completed Orders', value: realStats.totalOrders.toString(), icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: 'Live', isUp: true },
+        { label: 'Avg. Order Value', value: `₹${realStats.totalOrders > 0 ? Math.round(realStats.totalRevenue / realStats.totalOrders) : 0}`, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: 'Live', isUp: true },
+        { label: 'Peak Hour', value: '1:00 PM', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Mocked', isUp: true },
+      ];
     }
+    
+    if (timeRange === 'monthly') {
+      return[
+        { label: 'Monthly Revenue', value: '₹1,25,500', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: '+10.5%', isUp: true },
+        { label: 'Monthly Orders', value: '1,380', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: '+5.2%', isUp: true },
+        { label: 'Avg. Order Value', value: '₹91', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: '+1.2%', isUp: true },
+        { label: 'Peak Day', value: 'Friday', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Weekend', isUp: true },
+      ];
+    }
+    
+    return[
+      { label: 'Annual Revenue', value: '₹15,40,500', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', trend: '+22.1%', isUp: true },
+      { label: 'Annual Orders', value: '16,450', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', trend: '+18.4%', isUp: true },
+      { label: 'Avg. Order Value', value: '₹94', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', trend: '+4.1%', isUp: true },
+      { label: 'Peak Month', value: 'December', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', trend: 'Festive', isUp: true },
+    ];
   };
 
   const handleExport = () => {
     setIsExporting(true);
-    // Simulate CSV generation
     const data = getChartData();
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Date,Amount\n"
       + data.map(e => `${e.date},${e.amount}`).join("\n");
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `revenue_report_${timeRange}.csv`);
     document.body.appendChild(link);
-    
+
     setTimeout(() => {
       link.click();
       document.body.removeChild(link);
@@ -116,11 +114,7 @@ export default function VendorAnalytics() {
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                  timeRange === range
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${ timeRange === range ? "bg-emerald-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" }`}
               >
                 {range}
               </button>

@@ -50,8 +50,8 @@ const Menu: React.FC = () => {
           description: item.description || '',
           isVeg: item.isVeg,
           available: item.isAvailable,
-          category: "Snacks",
-          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400"
+          category: item.category ||"Snacks",
+          image: item.image,
         }));
 
         setMenuItems(mappedMenu);
