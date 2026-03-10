@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Search, SlidersHorizontal, X, Upload, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Search, X, Upload, Loader2, Trash2 } from 'lucide-react';
 import { MenuItem } from '../types.ts';
 import MenuItemCard from '../components/vendor/MenuItemCard.tsx';
 import { motion, AnimatePresence } from "framer-motion";
@@ -228,7 +228,7 @@ export default function VendorMenu() {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -376,7 +376,7 @@ export default function VendorMenu() {
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
