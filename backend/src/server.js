@@ -18,10 +18,15 @@ const app = express();
 
 connectDB();
 
+const allowedOrigins = 
+    process.env.NODE_ENV === 'production'
+        ? ['https://quick-pick-student.vercel.app',
+            'https://quick-pick-vendor.vercel.app'
+          ]
+        : ['http://localhost:3000'];
+
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? 'https://quick-pick-student.vercel.app'
-        : 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
