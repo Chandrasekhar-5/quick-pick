@@ -65,7 +65,7 @@ const deleteMenuItem = async (req, res, next) => {
             return res.status(400).json({ message: "No shop found for this vendor." });
         }
 
-        const menuItem = await MenuItem.findOne(req.params.id);
+        const menuItem = await MenuItem.findById(req.params.id);
         if (!menuItem) {
             return res.status(404).json({ message: "Menu item not found" });
         }

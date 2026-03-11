@@ -145,12 +145,19 @@ export default function VendorMenu() {
     setShowDeleteConfirm(id);
   };
 
-  const handleDelete = () => {
-    if (showDeleteConfirm) {
-      setMenu(prev => prev.filter(item => item.id !== showDeleteConfirm));
-      setShowDeleteConfirm(null);
-    }
-  };
+  const handleDelete = async () => {
+  if (!showDeleteConfirm) return;
+  
+  try {
+    await API.delete(`/menu/${showDeleteConfirm}`);
+    
+    setMenu(prev => prev.filter(item => item.id !== showDeleteConfirm));
+    setShowDeleteConfirm(null);
+  } catch (error) {
+    console.error("Failed to delete item:", error);
+    alert("Failed to delete item. Please try again.");
+  }
+};
 
   const filteredMenu = menu.filter(item => {
     const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
