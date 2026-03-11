@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Calendar, Download, Clock } from 'lucide-react';
+import { Search, Download, Clock } from 'lucide-react';
 import { Order, OrderStatus } from '../types.ts';
 import OrderCard from '../components/vendor/OrderCard.tsx';
 import { motion, AnimatePresence } from 'motion/react';

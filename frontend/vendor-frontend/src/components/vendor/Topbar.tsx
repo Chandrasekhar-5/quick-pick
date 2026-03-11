@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Check, Clock } from 'lucide-react';
+import { Bell, User, Check, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext.tsx';
 import { clsx, type ClassValue } from 'clsx';
