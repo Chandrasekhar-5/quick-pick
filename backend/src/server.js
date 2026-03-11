@@ -12,7 +12,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const swaggerSpec = require("./config/swagger");
-
+require("dotenv").config();
 const app = express();
 
 connectDB();
