@@ -57,13 +57,13 @@ router.post("/", protect, authorize("vendor"), createVendor);
 router.get("/", protect, getVendors);
 
 
-router.get("/owner::ownerId", protect, getVendorByOwner);
+router.get("/owner:ownerId", protect, getVendorByOwner);
 
 
-router.get(":/id", protect, getVendorById);
+router.get("/:id", protect, getVendorById);
 
 
-router.put(":/id", protect, authorize("vendor"), updateVendor);
+router.put("/:id", protect, authorize("vendor"), updateVendor);
 
 
 module.exports = router;
