@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { createVendor, getVendors } = require("../controllers/vendorController");
+const { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor } = require("../controllers/vendorController");
 const { protect, authorize } = require("../middlewares/authMiddleware");
+
 
 /**
  * @swagger
@@ -39,6 +40,7 @@ const { protect, authorize } = require("../middlewares/authMiddleware");
 
 router.post("/", protect, authorize("vendor"), createVendor);
 
+
 /**
  * @swagger
  * /api/vendors:
@@ -53,5 +55,15 @@ router.post("/", protect, authorize("vendor"), createVendor);
  */
 
 router.get("/", protect, getVendors);
+
+
+router.get("/owner::ownerId", protect, getVendorByOwner);
+
+
+router.get(":/id", protect, getVendorById);
+
+
+router.put(":/id", protect, authorize("vendor"), updateVendor);
+
 
 module.exports = router;
