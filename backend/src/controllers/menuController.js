@@ -28,6 +28,20 @@ const addMenuItem = async (req, res, next) => {
 
 const updateMenuItem = async (req, res, next) => {
     try {
+        const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
+        if (!vendorShop) {
+            return res.status(400).json({ message: "No shop found for this vendor." });
+        }
+
+        const existingItem = await MenuItem.findById(req.params.id);
+        if (!existingItem) {
+            return res.status(404).json({ message: "Menu Item not found" });
+        }
+
+        if (existingItem.vendorId.toString() !== vendorShop._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to update this item" });
+        }
+
         const updatedItem = await MenuItem.findByIdAndUpdate(
             req.params.id,
             req.body,
@@ -39,6 +53,29 @@ const updateMenuItem = async (req, res, next) => {
         }
 
         res.status(200).json(updatedItem);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const deleteMenuItem = async (req, res, next) => {
+    try {
+        const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
+        if (!vendorShop) {
+            return res.status(400).json({ message: "No shop found for this vendor." });
+        }
+
+        const menuItem = await MenuItem.findOne(req.params.id);
+        if (!menuItem) {
+            return res.status(404).json({ message: "Menu item not found" });
+        }
+
+        if (menuItem.vendorId.toString() !== vendorShop._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to delete this item" });
+        }
+
+        await MenuItem.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Menu item deleted successfully" });    
     } catch (error) {
         next(error);
     }
@@ -77,4 +114,4 @@ const getTrendingItems = async (req, res) => {
     }
 };
 
-module.exports = { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems };
+module.exports = { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem };
