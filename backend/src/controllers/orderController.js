@@ -62,10 +62,13 @@ const getVendorOrders = async (req, res) => {
             return res.status(400).json({ message: 'No shop found for this vendor' });
         }
 
+        const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+        
         const orders = await Order.find({ vendorId: vendorShop._id })
-               .populate('userId', 'name email')
-               .populate('items.menuItem', 'name price')
-               .sort({ createdAt: -1 });
+            .populate('userId', 'name email')
+            .populate('items.menuItem', 'name price')
+            .sort({ createdAt: -1 }) 
+            .limit(limit); 
 
         res.status(200).json(orders);
     } catch (error) {
