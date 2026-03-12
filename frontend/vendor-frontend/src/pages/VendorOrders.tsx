@@ -18,6 +18,7 @@ export default function VendorOrders() {
 
   
   const fetchOrders = async () => {
+    setIsLoading(true);
     try {
       const response = await API.get('/orders/vendor-orders');
       
@@ -134,10 +135,13 @@ console.log("mapped status:", mappedOrders[0].status);
               className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm dark:text-white"
             />
           </div>
-          <button onClick={fetchOrders} className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-            <Clock className="w-5 h-5" />
-            <span className="hidden sm:inline font-medium">Refresh</span>
-          </button>
+          <button 
+  onClick={fetchOrders} 
+  className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+>
+  <Clock className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+  <span className="hidden sm:inline font-medium">Refresh</span>
+</button>
         </div>
 
         <button 
