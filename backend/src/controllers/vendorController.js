@@ -59,22 +59,51 @@ const getVendorById = async (req, res) => {
     }
 };
 
+const uploadLogo = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const vendor = await Vendor.findOne({ ownerId: req.user._id });
+        
+        if (!vendor) {
+            return res.status(404).json({ message: 'Vendor shop not found' });
+        }
+
+        vendor.logo = req.file.path;
+        await vendor.save();
+
+        res.json({ 
+            message: 'Logo uploaded successfully',
+            logoUrl: req.file.path 
+        });
+    } catch (error) {
+        console.error('Error uploading logo:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 const updateVendor = async (req, res) => {
     try {
-        const vendor = await Vendor.findById(req.params.id);
+        const vendor = await Vendor.findOne({ ownerId: req.user._id });
+        
         if (!vendor) {
             return res.status(404).json({ message: "Vendor not found" });
         }
 
-        if (vendor.ownerId.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Not authorized to update this vendor" });
-        }
+        const updates = req.body;
+        Object.keys(updates).forEach(key => {
+            if (updates[key] !== undefined) {
+                vendor[key] = updates[key];
+            }
+        });
 
-        const updateVendor = await Vendor.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        res.status(200).json(updateVendor);
+        await vendor.save();
+        res.json(vendor);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-module.exports = { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor };
+module.exports = { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor, uploadLogo };
