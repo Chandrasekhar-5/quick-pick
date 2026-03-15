@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { User, Store, Mail, Phone, MapPin, Clock, Camera, Save, Loader2, ArrowRight, Shield, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import API from "../services/api";
 
 export default function VendorProfile() {
   const { vendor, updateProfile } = useAuth();
@@ -18,6 +19,7 @@ export default function VendorProfile() {
     email: vendor?.email || '',
     phone: vendor?.phone || '',
     address: vendor?.address || '',
+    description: vendor?.description || '',
     openingTime: vendor?.openingTime || '',
     closingTime: vendor?.closingTime || '',
   });
@@ -28,27 +30,57 @@ export default function VendorProfile() {
     confirmPassword: '',
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateProfile({ logo: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await API.post("/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const imageUrl = res.data.imageUrl;
+
+    await API.put("/vendors/me", {
+      logo: imageUrl,
+    });
+
+    updateProfile({ logo: imageUrl });
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      updateProfile(formData);
-      setIsLoading(false);
-      setIsEditing(false);
-    }, 1000);
-  };
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const res = await API.put("/vendors/me", {
+  name: formData.canteenName,
+  description: formData.description,
+  phone: formData.phone,
+  address: formData.address,
+  openingTime: formData.openingTime,
+  closingTime: formData.closingTime,
+});
+
+    const data = res.data;
+
+    updateProfile(data);
+    setIsEditing(false);
+  } catch (err) {
+    console.error(err);
+  }
+
+  setIsLoading(false);
+};
 
   const handleSecuritySubmit = (e: React.FormEvent) => {
     e.preventDefault();
