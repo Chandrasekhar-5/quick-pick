@@ -86,20 +86,11 @@ const uploadLogo = async (req, res) => {
 
 const updateVendor = async (req, res) => {
     try {
-        const vendor = await Vendor.findOne({ ownerId: req.user._id });
+        const vendor = await Vendor.findOneAndUpdate({ ownerId: req.user._id }, req.body, { new: true, runValidators: false} );
         
         if (!vendor) {
             return res.status(404).json({ message: "Vendor not found" });
         }
-
-        const updates = req.body;
-        Object.keys(updates).forEach(key => {
-            if (updates[key] !== undefined) {
-                vendor[key] = updates[key];
-            }
-        });
-
-        await vendor.save();
         res.json(vendor);
     } catch (error) {
         res.status(500).json({ message: error.message });
