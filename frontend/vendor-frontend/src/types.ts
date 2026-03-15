@@ -24,6 +24,7 @@ export interface VendorProfile {
   email: string;
   phone: string;
   address: string;
+  description: string;
   openingTime: string;
   closingTime: string;
   logo?: string;
