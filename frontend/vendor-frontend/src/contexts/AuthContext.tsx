@@ -31,11 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canteenName: myShop ? myShop.name : 'Setup Your Shop',
         ownerName: userData.name,
         email: userData.email,
-        phone: '+91 (Update in Profile)',
+        phone: myShop?.phone || '',
         address: myShop ? (myShop.description || 'Campus') : 'Main Campus',
-        openingTime: '08:00 AM',
-        closingTime: '09:00 PM',
-        logo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200'
+        description: myShop ? myShop.description : "",
+        openingTime: myShop?.openingTime || '08:00 AM',
+        closingTime: myShop?.closingTime ||'09:00 PM',
+        logo: myShop?.logo || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200'
       };
 
       setVendor(profile);
