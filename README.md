@@ -55,6 +55,8 @@ README.md
 ## Current Development Status
 
 Backend MVP has been completed and integrated with the Student Frontend.
+Backend MVP has been completed and integrated with the vendor Frontned.
+The Frontend has been deployed using vercel and backend using render.
 
 Completed:
 
@@ -68,7 +70,6 @@ Completed:
 
 Next Phase:
 
-* Vendor dashboard integration
 * Admin dashboard integration
 * Deployment preparation
 
