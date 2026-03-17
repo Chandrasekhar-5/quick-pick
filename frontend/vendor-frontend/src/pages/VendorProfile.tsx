@@ -217,6 +217,21 @@ export default function VendorProfile() {
               </div>
             </div>
 
+            <div className="space-y-2 md:col-span-2">
+  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+    Description
+  </label>
+  <textarea
+    disabled={!isEditing}
+    rows={3}
+    value={formData.description}
+    onChange={(e) =>
+      setFormData({ ...formData, description: e.target.value })
+    }
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-line dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 resize-none dark:text-white"
+  />
+</div>
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">Opening Time</label>
               <div className="relative">
