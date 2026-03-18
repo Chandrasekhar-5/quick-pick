@@ -37,6 +37,17 @@ export interface OrderItem {
   price: number;
 }
 
+export interface DashboardStats {
+  todayRevenue: number;
+  activeOrders: number;
+  totalCustomers: number;
+  avgPrepTime: number;
+  revenueTrend: string;
+  ordersTrend: string;
+  customersTrend: string;
+  prepTimeTrend: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;
