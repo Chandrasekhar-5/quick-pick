@@ -2,9 +2,9 @@
 
 ## Current Phase
 
-Backend MVP completed and integrated with the Student Frontend.
+Backend MVP completed and integrated with the Student Frontend and Vendor Frontend, but still some basic features are left to integrate.
 
-Next milestone is integrating the Vendor Frontend.
+Next milestone is integrating features in the Vendor Frontend and Student Frontend and also writing backend for Admin Frontend.
 
 ## Completed Work
 

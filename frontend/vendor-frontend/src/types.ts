@@ -24,6 +24,7 @@ export interface VendorProfile {
   email: string;
   phone: string;
   address: string;
+  description: string;
   openingTime: string;
   closingTime: string;
   logo?: string;
@@ -34,6 +35,17 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+}
+
+export interface DashboardStats {
+  todayRevenue: number;
+  activeOrders: number;
+  totalCustomers: number;
+  avgPrepTime: number;
+  revenueTrend: string;
+  ordersTrend: string;
+  customersTrend: string;
+  prepTimeTrend: string;
 }
 
 export interface Order {
