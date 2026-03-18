@@ -33,7 +33,7 @@ const vendorSchema = new mongoose.Schema(
         },
         logo: {
             type: String,
-            default: 'https://www.freeiconspng.com/uploads/no-image-icon-9.png'
+            default: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200'
         },
         address: {
             type: String,
