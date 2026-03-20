@@ -93,6 +93,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const[transactions, setTransactions] = useState<Transaction[]>([]);
 
+
+  const fetchWallet = async () => {
+    try {
+        const res = await API.get('/wallet');
+        if (res.data) {
+            setUser(prev => prev ? { 
+                ...prev, 
+                walletBalance: res.data.balance || 0,
+                rewardPoints: Math.floor((res.data.balance || 0) * 0.02)  
+            } : null);
+            
+            const formattedTransactions = res.data.transactions.map((t: any) => ({
+                id: t._id || `TXN${Date.now()}`,
+                type: t.type === 'credit' ? 'Credit' : 'Debit',
+                amount: t.amount,
+                description: t.description,
+                date: new Date(t.createdAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            }));
+            
+            setTransactions(formattedTransactions);
+        }
+    } catch (err) {
+        console.error("Failed to fetch wallet", err);
+    }
+};
   const fetchMyOrders = async () => {
     try {
       const res = await API.get('/orders/myorders');
@@ -124,62 +155,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const initializeApp = async () => {
-      const token = localStorage.getItem('studentToken');
-      
-      if (token) {
-        try {
-          const userRes = await API.get('/auth/me');
-          
-          setUser({
-            _id: userRes.data._id,
-            name: userRes.data.name,
-            email: userRes.data.email,
-            role: userRes.data.role,
-            walletBalance: 500.00,
-            studentId: userRes.data._id.substring(0, 8).toUpperCase(),
-            rewardPoints: 150
-          });
-
-          await fetchMyOrders();
-
-        } catch (error) {
-          console.error("Session expired or invalid token.");
-          localStorage.removeItem('studentToken');
+        const token = localStorage.getItem('studentToken');
+        
+        if (token) {
+            try {
+                const userRes = await API.get('/auth/me');
+                
+                setUser({
+                    _id: userRes.data._id,
+                    name: userRes.data.name,
+                    email: userRes.data.email,
+                    role: userRes.data.role,
+                    walletBalance: 0,
+                    studentId: userRes.data._id.substring(0, 8).toUpperCase(),
+                    rewardPoints: 0
+                });
+                
+                await fetchWallet();
+                await fetchMyOrders();
+            } catch (error) {
+                console.error("Session expired or invalid token.");
+                localStorage.removeItem('studentToken');
+            }
         }
-      }
-      
-      const savedNotifications = localStorage.getItem('qp_notifications');
-      if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
-
-      const savedTransactions = localStorage.getItem('qp_transactions');
-      if (savedTransactions) setTransactions(JSON.parse(savedTransactions));
-
-      setIsLoading(false);
+        
+        setIsLoading(false);
     };
-
+    
     initializeApp();
-  },[]);
+}, []);
 
-  const saveToStorage = (key: string, data: any) => {
-    localStorage.setItem(key, JSON.stringify(data));
-  };
-
-  const login = (userData: any) => {
+  const login = async (userData: any) => {
     if (userData.role !== "student") {
       alert("Only students are allowed to login");
       return;
     }
-    const newUser: User = {
-      _id: userData._id,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-      walletBalance: 500.00,
-      studentId: userData._id.substring(0, 8).toUpperCase(),
-      rewardPoints: 150
-    };
-    setUser(newUser);
-    fetchMyOrders(); 
+    setUser({
+        _id: userData._id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        walletBalance: 0,
+        studentId: userData._id.substring(0, 8).toUpperCase(),
+        rewardPoints: 0
+    });
+
+    await fetchWallet();
+    await fetchMyOrders();
     addNotification("Welcome to QuickPick!", "Start pre-ordering from your favorite campus shops.", "system");
   };
 
@@ -250,49 +272,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentShopId(null);
   };
 
-  const addFunds = (amount: number) => {
+  const addFunds = async (amount: number) => {
     if (!user) return;
-    const updated = { ...user, walletBalance: user.walletBalance + amount };
-    setUser(updated);
     
-    const newTxn: Transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'credit',
-      amount,
-      description: 'Added funds to wallet',
-      date: new Date().toISOString()
-    };
-    const updatedTxns = [newTxn, ...transactions];
-    setTransactions(updatedTxns);
-    saveToStorage('qp_transactions', updatedTxns);
-    
-    addNotification("Funds Added", `₹${amount} has been added to your wallet.`, "wallet");
-  };
+    try {
+        const res = await API.post('/wallet/add', { amount });
+        setUser(prev => prev ? { ...prev, walletBalance: res.data.balance } : null);
+        
+        await fetchWallet();
+        
+        addNotification("Funds Added", `₹${amount} has been added to your wallet.`, "wallet");
+    } catch (error) {
+        console.error("Failed to add funds:", error);
+        addNotification("Error", "Failed to add funds. Please try again.", "system");
+    }
+};
 
-  const deductFunds = (amount: number) => {
+  const deductFunds = async (amount: number, orderId?: string): Promise<boolean> => {
     if (!user || user.walletBalance < amount) return false;
     
-    const pointsEarned = Math.floor(amount * 0.02);
-    const updated = { 
-      ...user, 
-      walletBalance: user.walletBalance - amount,
-      rewardPoints: user.rewardPoints + pointsEarned
-    };
-    setUser(updated);
-
-    const newTxn: Transaction = {
-      id: `TXN${Date.now()}`,
-      type: 'debit',
-      amount,
-      description: 'Payment for order',
-      date: new Date().toISOString()
-    };
-    const updatedTxns =[newTxn, ...transactions];
-    setTransactions(updatedTxns);
-    saveToStorage('qp_transactions', updatedTxns);
-
-    return true;
-  };
+    try {
+        const res = await API.post('/wallet/deduct', { 
+            amount, 
+            orderId,
+            description: 'Payment for order'
+        });
+        
+        setUser(prev => prev ? { ...prev, walletBalance: res.data.balance } : null);
+        
+        const walletRes = await API.get('/wallet');
+        setTransactions(walletRes.data.transactions);
+        
+        const pointsEarned = Math.floor(amount * 0.02);
+        setUser(prev => prev ? { ...prev, rewardPoints: prev.rewardPoints + pointsEarned } : null);
+        
+        return true;
+    } catch (error) {
+        console.error("Failed to deduct funds:", error);
+        return false;
+    }
+};
 
   const placeOrder = (orderData: any) => {
     console.log("Data passed to placeOrder:", orderData);
@@ -338,19 +357,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     const updated =[newNotif, ...notifications];
     setNotifications(updated);
-    saveToStorage('qp_notifications', updated);
   };
 
   const markNotificationAsRead = (id: string) => {
     const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
     setNotifications(updated);
-    saveToStorage('qp_notifications', updated);
   };
 
   const markAllNotificationsAsRead = () => {
     const updated = notifications.map(n => ({ ...n, read: true }));
     setNotifications(updated);
-    saveToStorage('qp_notifications', updated);
   };
 
   return (
