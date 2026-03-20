@@ -39,7 +39,7 @@ const Menu: React.FC = () => {
             prepTime: "10-15 min",
             location: "Main Campus",
             crowdLevel: "Low",
-            categories:["Snacks", "Beverages", "Main Course"]
+            categories:["All"]
           });
         }
 
@@ -56,6 +56,9 @@ const Menu: React.FC = () => {
 
         setMenuItems(mappedMenu);
         setFilteredMenu(mappedMenu);
+
+        const uniqueCategories = ['All', ...new Set(mappedMenu.map(item => item.category))];
+        setShop(prev => ({ ...prev, categories: uniqueCategories }));
 
       } catch (error) {
         console.error("Failed to fetch menu:", error);
