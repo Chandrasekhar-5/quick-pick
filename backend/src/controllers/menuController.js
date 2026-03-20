@@ -1,6 +1,30 @@
 const MenuItem = require("../models/MenuItem");
 const Vendor = require("../models/Vendor");
 
+
+const searchItems = async (req, res) => {
+    try {
+        const { q } = req.query;
+        
+        if (!q) {
+            return res.json({ shops: [], items: [] });
+        }
+        
+        const vendors = await Vendor.find({
+            collegeId: req.user.college,
+            name: { $regex: q, $options: 'i' }
+        });
+        
+        const items = await MenuItem.find({
+            name: { $regex: q, $options: 'i' }
+        }).populate('vendorId', 'name image');
+        
+        res.json({ shops: vendors, items });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 const addMenuItem = async (req, res, next) => {
     try {
         const { name, price, description, isVeg, isAvailable, image } = req.body;
@@ -114,4 +138,4 @@ const getTrendingItems = async (req, res) => {
     }
 };
 
-module.exports = { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem };
+module.exports = { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem };

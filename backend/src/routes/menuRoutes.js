@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem } = require('../controllers/menuController');
+const { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem } = require('../controllers/menuController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
+
+router.get('/search', protect, searchItems);
 
 /**
  * @swagger
