@@ -78,13 +78,13 @@ const OrderTracking: React.FC = () => {
   };
 
   const steps = [
-    { status: 'confirmed', label: 'Order Confirmed', icon: <CheckCircle size={20} /> },
+    { status: 'pending', label: 'Order Confirmed', icon: <CheckCircle size={20} /> },
     { status: 'preparing', label: 'Preparing Food', icon: <Clock size={20} /> },
     { status: 'ready', label: 'Ready for Pickup', icon: <ShoppingBag size={20} /> },
-    { status: 'picked_up', label: 'Picked Up', icon: <CheckCircle size={20} /> },
+    { status: 'completed', label: 'Picked Up', icon: <CheckCircle size={20} /> },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.status === order.status);
+  const currentStepIndex = steps.findIndex(s => s.status === order?.status?.toLowerCase());
 
   return (
     <div className="order-tracking-page container">
