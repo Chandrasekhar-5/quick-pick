@@ -79,6 +79,7 @@ interface AppContextType {
   markAllNotificationsAsRead: () => void;
   transactions: Transaction[];
   refreshOrders: () => void; 
+  updateUser: (updateData: Partial<User>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -93,6 +94,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const[transactions, setTransactions] = useState<Transaction[]>([]);
 
+
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser(prev => prev ? {...prev, ...updatedData } : null);
+  };
 
   const fetchWallet = async () => {
     try {
@@ -375,7 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToCart, removeFromCart, updateQuantity, clearCart, login, logout, 
       addFunds, deductFunds, orders, placeOrder, updateOrderStatus, cancelOrder,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead,
-      transactions, refreshOrders: fetchMyOrders
+      transactions, refreshOrders: fetchMyOrders, updateUser
     }}>
       {children}
     </AppContext.Provider>

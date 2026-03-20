@@ -25,6 +25,18 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'College',
             required: true
+        },
+        phone: {
+            type: String,
+            default: ''
+        },
+        department: {
+            type: String,
+            default: ''
+        },
+        hostel: {
+            type: String,
+            default: ''
         }
     },
     {
