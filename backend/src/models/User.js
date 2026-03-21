@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
+
+// added new fields
 const userSchema = new mongoose.Schema(
     {
         name: {
