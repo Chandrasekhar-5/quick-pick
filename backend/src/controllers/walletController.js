@@ -1,5 +1,6 @@
 const Wallet = require('../models/Wallet');
 
+// logic for wallet
 const getWallet = async (req, res) => {
     try {
         let wallet = await Wallet.findOne({ userId: req.user._id });
