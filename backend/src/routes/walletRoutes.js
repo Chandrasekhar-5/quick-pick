@@ -1,3 +1,5 @@
+// wallet routes
+
 const express = require('express');
 const router = express.Router();
 const { getWallet, addFunds, deductFunds } = require('../controllers/walletController');
