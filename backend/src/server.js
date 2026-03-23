@@ -45,6 +45,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// used wallet routes
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/colleges", collegeRoutes);
