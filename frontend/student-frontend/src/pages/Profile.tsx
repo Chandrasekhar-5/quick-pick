@@ -20,11 +20,13 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Profile.css';
+import API from '../services/api';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useApp();
+  const { user, logout, addNotification, updateUser } = useApp();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -38,10 +40,30 @@ const Profile: React.FC = () => {
     navigate('/');
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsEditing(false);
-    // Mock save
+    setIsLoading(true);
+
+    try {
+      const response = await API.put('/auth/update-profile', {
+        name: formData.name,
+        phone: formData.phone,
+        department: formData.department,
+        hostel: formData.hostel
+      });
+
+      if (response.data.user) {
+        updateUser(response.data.user);
+        addNotification("Profile Updated", "Your Profile has been successfully", "system");
+      }
+
+      setIsEditing(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      addNotification("Error", "Failed to update profile", "system");
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -18,6 +18,11 @@ const menuItemSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Please add an image']
         },
+        category: {
+            type: String,
+            enum: ['Breakfast', 'Snacks', 'Beverages', 'Main Course', 'Desserts'],
+            default: 'Snacks'
+        },
         isVeg: {
             type: Boolean,
             default: true

@@ -38,8 +38,7 @@ const Menu: React.FC = () => {
             rating: 4.5,
             prepTime: "10-15 min",
             location: "Main Campus",
-            crowdLevel: "Low",
-            categories:["Snacks", "Beverages", "Main Course"]
+            crowdLevel: "Low"
           });
         }
 
@@ -56,6 +55,10 @@ const Menu: React.FC = () => {
 
         setMenuItems(mappedMenu);
         setFilteredMenu(mappedMenu);
+
+        const uniqueCategories = ['All', ...new Set(mappedMenu.map(item => item.category))];
+        const finalCategories = [...new Set(uniqueCategories)];
+        setShop(prev => ({ ...prev, categories: finalCategories }));
 
       } catch (error) {
         console.error("Failed to fetch menu:", error);
@@ -139,7 +142,7 @@ const Menu: React.FC = () => {
 
       <div className="menu-content container">
         <aside className="category-sidebar">
-          {['All', ...shop.categories].map(cat => (
+          {shop?.categories?.map(cat => (
             <button 
               key={cat}
               className={`cat-link ${activeCategory === cat ? 'active' : ''}`}
