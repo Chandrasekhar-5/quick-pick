@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
+
+// added new fields
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -25,6 +27,18 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'College',
             required: true
+        },
+        phone: {
+            type: String,
+            default: ''
+        },
+        department: {
+            type: String,
+            default: ''
+        },
+        hostel: {
+            type: String,
+            default: ''
         }
     },
     {

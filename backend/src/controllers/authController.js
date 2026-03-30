@@ -64,4 +64,38 @@ const getMe = async (req, res) => {
     res.status(200).json(req.user);
 }
 
-module.exports = { registerUser, loginUser, getMe };
+const updateProfile = async (req, res) => {
+    try {
+        const { name, phone, department, hostel } = req.body;
+        
+        const user = await User.findById(req.user._id);
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (department) user.department = department;
+        if (hostel) user.hostel = hostel;
+        
+        await user.save();
+
+         res.json({
+            message: "Profile updated successfully",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone,
+                department: user.department,
+                hostel: user.hostel
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, getMe, updateProfile };

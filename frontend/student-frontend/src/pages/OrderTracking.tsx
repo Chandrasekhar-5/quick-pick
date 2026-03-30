@@ -16,6 +16,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { shops } from '../data/shops';
 import './OrderTracking.css';
+import API from '../services/api';
 
 const OrderTracking: React.FC = () => {
   const { orderId } = useParams();
@@ -26,7 +27,7 @@ const OrderTracking: React.FC = () => {
   
   const order = orders.find(o => o.id === orderId);
   const shop = shops.find(s => s.name === order?.shopName);
-  const [timeLeft, setTimeLeft] = useState(15); // Mock 15 mins
+  const [timeLeft, setTimeLeft] = useState(15); 
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([
@@ -34,26 +35,27 @@ const OrderTracking: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (!order) return;
-
-    // Mock status progression
-    const timer = setInterval(() => {
-      if (order.status === 'confirmed') {
-        updateOrderStatus(order.id, 'preparing');
-      } else if (order.status === 'preparing' && timeLeft <= 10) {
-        updateOrderStatus(order.id, 'ready');
-      }
-    }, 5000);
-
-    const countdown = setInterval(() => {
-      setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 60000);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(countdown);
+    if (!orderId) return;
+    
+    const fetchOrder = async () => {
+        try {
+            const res = await API.get(`/orders/single/${orderId}`);
+            const dbOrder = res.data;
+            
+            if (dbOrder.status !== order?.status) {
+                updateOrderStatus(orderId, dbOrder.status.toLowerCase());
+            }
+        } catch (err) {
+            console.error("Failed to fetch order:", err);
+        }
     };
-  }, [order, timeLeft, updateOrderStatus]);
+    
+    fetchOrder();
+    
+    const interval = setInterval(fetchOrder, 5000);
+    
+    return () => clearInterval(interval);
+}, [orderId, order?.status, updateOrderStatus]);
 
   if (!order) {
     return (
@@ -76,13 +78,13 @@ const OrderTracking: React.FC = () => {
   };
 
   const steps = [
-    { status: 'confirmed', label: 'Order Confirmed', icon: <CheckCircle size={20} /> },
+    { status: 'pending', label: 'Order Confirmed', icon: <CheckCircle size={20} /> },
     { status: 'preparing', label: 'Preparing Food', icon: <Clock size={20} /> },
     { status: 'ready', label: 'Ready for Pickup', icon: <ShoppingBag size={20} /> },
-    { status: 'picked_up', label: 'Picked Up', icon: <CheckCircle size={20} /> },
+    { status: 'completed', label: 'Picked Up', icon: <CheckCircle size={20} /> },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.status === order.status);
+  const currentStepIndex = steps.findIndex(s => s.status === order?.status?.toLowerCase());
 
   return (
     <div className="order-tracking-page container">

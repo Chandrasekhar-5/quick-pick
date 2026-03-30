@@ -15,7 +15,8 @@ const Cart: React.FC = () => {
   } = useApp();
   const navigate = useNavigate();
   
-  const[selectedSlot, setSelectedSlot] = useState(slots[0].time);
+  const [realSlots, setRealSlots] = useState<any[]>([]);
+  const[selectedSlot, setSelectedSlot] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'cash'>('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -46,6 +47,20 @@ const Cart: React.FC = () => {
     fetchRealShop();
   }, [currentShopId]);
 
+  useEffect(() => {
+    const fetchSlots = async () => {
+        if (currentShopId) {
+            try {
+                const res = await API.get(`/orders/${currentShopId}/slots`);
+                setRealSlots(res.data);
+            } catch (err) {
+                console.error("Failed to fetch slots:", err);
+            }
+        }
+    };
+    fetchSlots();
+}, [currentShopId]);
+
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = Math.round(subtotal * 0.05);
   const total = subtotal + tax;
@@ -57,53 +72,49 @@ const Cart: React.FC = () => {
   ].filter(item => !cart.find(c => c.name === item.name));
 
   const handlePlaceOrder = async () => {
-  if (!user) return navigate('/');
-  if (paymentMethod === 'wallet' && user.walletBalance < total) {
-    setError('Insufficient wallet balance. Please add funds.');
-    return;
-  }
-
-  setIsProcessing(true);
-  setError('');
-
-  try {
-    const backendItems = cart.map(item => {
-      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(item.id.toString());
-      
-      if (!isValidObjectId) {
-        console.warn(`Item ${item.id} is not a valid ObjectId. Make sure your cart items have real MongoDB IDs.`);
-      }
-      
-      return {
-        menuItem: item.id,
-        quantity: item.quantity
-      };
-    });
-
-    const response = await API.post('/orders', {
-      vendorId: currentShopId,
-      items: backendItems,
-    });
-
-    console.log("Real Order Created in DB!", response.data);
-
-    if (paymentMethod === 'wallet') deductFunds(total);
-
-    const orderId = placeOrder(response.data);
-
-    setIsSuccess(true);
-    clearCart();
-    setIsProcessing(false);
+    if (!user) return navigate('/');
     
-    setTimeout(() => {
-      navigate(`/order-tracking/${orderId}`);
-    }, 2000);
+    if (paymentMethod === 'wallet' && user.walletBalance < total) {
+        setError('Insufficient wallet balance. Please add funds.');
+        return;
+    }
 
-  } catch (err: any) {
-    console.error("Failed to place order:", err);
-    setError(err.response?.data?.message || 'Failed to place order with backend.');
-    setIsProcessing(false);
-  }
+    setIsProcessing(true);
+    setError('');
+
+    try {
+        const backendItems = cart.map(item => ({
+            menuItem: item.id,
+            quantity: item.quantity
+        }));
+
+        const response = await API.post('/orders', {
+            vendorId: currentShopId,
+            items: backendItems,
+            pickupSlot: selectedSlot,
+            paymentMethod
+        });
+
+        if (paymentMethod === 'wallet') {
+            const deducted = await deductFunds(total, response.data._id);
+            if (!deducted) {
+                throw new Error('Payment failed');
+            }
+        }
+
+        const orderId = placeOrder(response.data);
+        setIsSuccess(true);
+        clearCart();
+        setIsProcessing(false);
+        
+        setTimeout(() => {
+            navigate(`/order-tracking/${orderId}`);
+        }, 2000);
+    } catch (err: any) {
+        console.error("Failed to place order:", err);
+        setError(err.response?.data?.message || 'Failed to place order.');
+        setIsProcessing(false);
+    }
 };
 
   if (cart.length === 0) {
