@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const generateToken = (id) => {
     return jwt.sign({ id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
-
+// just a comment
 const loginAdmin = async (req, res) => {
     try {
         const { email, password } = req.body;
