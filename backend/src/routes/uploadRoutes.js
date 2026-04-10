@@ -11,7 +11,6 @@ const upload = multer({
 });
 
 
-
 router.post('/', protect, authorize('vendor'), upload.single('image'), (req, res) => {
     try {
         if (!req.file) {

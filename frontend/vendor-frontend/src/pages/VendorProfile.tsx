@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { User, Store, Mail, Phone, MapPin, Clock, Camera, Save, Loader2, ArrowRight, Shield, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import API from "../services/api";
 
 export default function VendorProfile() {
   const { vendor, updateProfile } = useAuth();
@@ -18,6 +19,7 @@ export default function VendorProfile() {
     email: vendor?.email || '',
     phone: vendor?.phone || '',
     address: vendor?.address || '',
+    description: vendor?.description || '',
     openingTime: vendor?.openingTime || '',
     closingTime: vendor?.closingTime || '',
   });
@@ -28,27 +30,57 @@ export default function VendorProfile() {
     confirmPassword: '',
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateProfile({ logo: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await API.post("/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const imageUrl = res.data.imageUrl;
+
+    await API.put("/vendors/me", {
+      logo: imageUrl,
+    });
+
+    updateProfile({ logo: imageUrl });
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      updateProfile(formData);
-      setIsLoading(false);
-      setIsEditing(false);
-    }, 1000);
-  };
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const res = await API.put("/vendors/me", {
+  name: formData.canteenName,
+  description: formData.description,
+  phone: formData.phone,
+  address: formData.address,
+  openingTime: formData.openingTime,
+  closingTime: formData.closingTime,
+});
+
+    const data = res.data;
+
+    updateProfile(data);
+    setIsEditing(false);
+  } catch (err) {
+    console.error(err);
+  }
+
+  setIsLoading(false);
+};
 
   const handleSecuritySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,6 +217,21 @@ export default function VendorProfile() {
               </div>
             </div>
 
+            <div className="space-y-2 md:col-span-2">
+  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+    Description
+  </label>
+  <textarea
+    disabled={!isEditing}
+    rows={3}
+    value={formData.description}
+    onChange={(e) =>
+      setFormData({ ...formData, description: e.target.value })
+    }
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-900/50 border border-line dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-500 resize-none dark:text-white"
+  />
+</div>
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">Opening Time</label>
               <div className="relative">
@@ -264,7 +311,7 @@ export default function VendorProfile() {
       {/* Security Modal */}
       <AnimatePresence>
         {showSecurityModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

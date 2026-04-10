@@ -13,6 +13,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const swaggerSpec = require("./config/swagger");
 const uploadRoutes = require("./routes/uploadRoutes");
+const walletRoutes = require('./routes/walletRoutes');
 
 const app = express();
 
@@ -26,10 +27,25 @@ const allowedOrigins =
         : ['http://localhost:3000'];
 
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
+    origin: function (origin, callback) {
+
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    if (origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("CORS not allowed: " + origin));
+  },
+  credentials: true
 }));
 app.use(express.json());
+
+// used wallet routes
 
 
 app.use("/api/auth", authRoutes);
@@ -40,6 +56,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/upload", uploadRoutes);
+app.use("/api/wallet", walletRoutes);
 
 
 

@@ -2,9 +2,11 @@
 
 ## Current Phase
 
-Backend MVP completed and integrated with the Student Frontend.
+Backend MVP completed and integrated with the Student Frontend and Vendor Frontend, but still some basic features are left to integrate.
 
-Next milestone is integrating the Vendor Frontend.
+Next milestone is integrating features in the Vendor Frontend and Student Frontend and also writing backend for Admin Frontend.
+
+Student frontend needs to be completed.
 
 ## Completed Work
 
@@ -42,12 +44,15 @@ Student Frontend Integration
 * Menu browsing
 * Cart checkout connected to backend APIs
 
+
+Vendor frontend is completed except for the notifications and loading ui.
+
 ## Upcoming Work
 
-Vendor dashboard integration
+Vendor dashboard integration (Completed)
 
 Admin dashboard integration
 
 Improved analytics and reporting
 
-Deployment and infrastructure setup
+Deployment and infrastructure setup (completed)

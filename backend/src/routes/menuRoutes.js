@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems } = require('../controllers/menuController');
+const { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem } = require('../controllers/menuController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
+
+router.get('/search', protect, searchItems);
 
 /**
  * @swagger
@@ -43,8 +45,40 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 router.post('/', protect, authorize('vendor'), addMenuItem);
 
 
+/**
+ * @swagger
+ * /api/menu/{id}:
+ *   put:
+ *     summary: Update a menu item
+ *     tags: [Menu]
+ *     security:
+ *       - bearerAuth:[]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Menu item updated successfully
+ */
+
 router.put('/:id', protect, authorize('vendor'), updateMenuItem);
 
+
+/**
+ * @swagger
+ * /api/menu/campus/trending:
+ *   get:
+ *     summary: Get trending items for the campus
+ *     tags: [Menu]
+ *     security:
+ *       - bearerAuth:[]
+ *     responses:
+ *       200:
+ *         description: Trending menu items retrieved
+ */
 
 router.get('/campus/trending', protect, getTrendingItems);
 
@@ -66,5 +100,8 @@ router.get('/campus/trending', protect, getTrendingItems);
  */
 
 router.get('/:vendorId', getMenuItemsByVendor);
+
+
+router.delete('/:id', protect, authorize('vendor'), deleteMenuItem);
 
 module.exports = router;

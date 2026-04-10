@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus } = require('../controllers/orderController');
+const { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder } = require('../controllers/orderController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 /**
@@ -82,6 +82,15 @@ router.get('/myOrders', protect, getMyOrders);
  */
 
 router.get('/vendor-orders', protect, authorize('vendor'), getVendorOrders);
+
+
+router.get('/stats', protect, getOrderStats);
+
+
+router.get('/:vendorId/slots', protect, getAvailableSlots);
+
+
+router.get('/single/:id', protect, getSingleOrder);
 
 /**
  * @swagger

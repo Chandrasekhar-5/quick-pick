@@ -10,8 +10,7 @@ import {
   ChevronRight,
   CreditCard,
   ShieldCheck,
-  Smartphone,
-  Banknote
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Wallet.css';
@@ -20,20 +19,26 @@ const Wallet: React.FC = () => {
   const { user, transactions, addFunds } = useApp();
   const [filter, setFilter] = useState('All');
   const [amount, setAmount] = useState('');
-  const [showAddMoney, setShowAddMoney] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   const filteredTransactions = transactions.filter(t => {
     if (filter === 'All') return true;
     return t.type === filter;
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const handleAddFunds = (e: React.FormEvent) => {
+  const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(amount);
     if (val > 0) {
-      addFunds(val);
-      setAmount('');
-      setShowAddMoney(false);
+      setIsAdding(true);
+      try {
+        await addFunds(val);
+        setAmount('');
+      } catch (error) {
+        console.error("Failed to add funds:", error);
+      } finally {
+        setIsAdding(false);
+      }
     }
   };
 
@@ -56,11 +61,11 @@ const Wallet: React.FC = () => {
             <div className="balance-footer">
               <div className="reward-points">
                 <Gift size={16} />
-                <span>{user?.rewardPoints} Reward Points</span>
+                <span>{user?.rewardPoints || 0} Reward Points</span>
               </div>
               <div className="savings">
                 <TrendingUp size={16} />
-                <span>Saved ₹450 this month</span>
+                <span>Earn 2% cashback on every order</span>
               </div>
             </div>
           </div>
@@ -75,6 +80,9 @@ const Wallet: React.FC = () => {
                   placeholder="Enter amount" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  min="1"
+                  step="1"
+                  required
                 />
               </div>
               <div className="quick-amounts">
@@ -89,8 +97,19 @@ const Wallet: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <button type="submit" className="btn-primary add-btn">
-                PROCEED TO ADD
+              <button 
+                type="submit" 
+                className="btn-primary add-btn"
+                disabled={isAdding || !amount || parseFloat(amount) <= 0}
+              >
+                {isAdding ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    PROCESSING...
+                  </>
+                ) : (
+                  'PROCEED TO ADD'
+                )}
               </button>
             </form>
           </div>
@@ -128,7 +147,7 @@ const Wallet: React.FC = () => {
                 ))
               ) : (
                 <div className="no-transactions">
-                  <p>No transactions found for this filter.</p>
+                  <p>No transactions yet. Add funds to get started!</p>
                 </div>
               )}
             </div>
@@ -147,8 +166,8 @@ const Wallet: React.FC = () => {
                   <Gift size={20} color="#FC8019" />
                 </div>
                 <div className="offer-text">
-                  <strong>Get 10% Cashback</strong>
-                  <p>On orders above ₹500 using wallet</p>
+                  <strong>Get 2% Cashback</strong>
+                  <p>On all orders using QuickPick wallet</p>
                 </div>
               </div>
               <div className="offer-item">
@@ -156,8 +175,8 @@ const Wallet: React.FC = () => {
                   <Gift size={20} color="#FC8019" />
                 </div>
                 <div className="offer-text">
-                  <strong>Flat ₹50 OFF</strong>
-                  <p>First wallet recharge of ₹1000+</p>
+                  <strong>Welcome Bonus ₹50</strong>
+                  <p>On first wallet recharge of ₹500+</p>
                 </div>
               </div>
             </div>
@@ -171,7 +190,7 @@ const Wallet: React.FC = () => {
             <p>Your transactions are protected with 256-bit encryption.</p>
             <div className="payment-partners">
               <CreditCard size={20} />
-              <span>UPI, Visa, Mastercard, RuPay</span>
+              <span>UPI, Cards, Net Banking</span>
             </div>
           </div>
         </aside>

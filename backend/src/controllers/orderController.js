@@ -62,10 +62,13 @@ const getVendorOrders = async (req, res) => {
             return res.status(400).json({ message: 'No shop found for this vendor' });
         }
 
+        const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+        
         const orders = await Order.find({ vendorId: vendorShop._id })
-               .populate('userId', 'name email')
-               .populate('items.menuItem', 'name price')
-               .sort({ createdAt: -1 });
+            .populate('userId', 'name email')
+            .populate('items.menuItem', 'name price')
+            .sort({ createdAt: -1 }) 
+            .limit(limit); 
 
         res.status(200).json(orders);
     } catch (error) {
@@ -98,4 +101,97 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-module.exports = { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus };
+const getOrderStats = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayOrders = await Order.find({
+            userId: req.user._id,
+            createdAt: { $gte: today, $lt: tomorrow }
+        });
+        
+        const readyOrders = await Order.countDocuments({
+            userId: req.user._id,
+            status: 'READY'
+        });
+        
+        const nextOrder = await Order.findOne({
+            userId: req.user._id,
+            status: { $in: ['PENDING', 'PREPARING', 'READY'] }
+        }).sort({ pickupSlot: 1 });
+        
+        res.json({
+            todayOrders: todayOrders.length,
+            readyOrders,
+            nextPickup: nextOrder?.pickupSlot || null
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getAvailableSlots = async (req, res) => {
+    try {
+        const { vendorId } = req.params;
+        
+        const slots = [];
+        for (let hour = 12; hour <= 21; hour++) {
+            for (let min = 0; min < 60; min += 30) {
+                if (hour === 21 && min === 30) break;
+                
+                const startHour = hour % 12 || 12;
+                const startTime = `${startHour}:${min.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+                const endMin = min + 30;
+                const endHour = hour + (endMin >= 60 ? 1 : 0);
+                const endHourFormatted = endHour % 12 || 12;
+                const endMinFormatted = (endMin % 60).toString().padStart(2, '0');
+                const endTime = `${endHourFormatted}:${endMinFormatted} ${endHour >= 12 ? 'PM' : 'AM'}`;
+                
+                const slotTime = `${startTime} - ${endTime}`;
+                
+                const slotOrders = await Order.countDocuments({
+                    vendorId,
+                    pickupSlot: slotTime,
+                    status: { $nin: ['CANCELLED', 'COMPLETED'] }
+                });
+                
+                slots.push({
+                    time: slotTime,
+                    capacity: 5,
+                    current: slotOrders
+                });
+            }
+        }
+        
+        res.json(slots);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getSingleOrder = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate('userId', 'name email')
+            .populate('vendorId', 'name phone image')
+            .populate('items.menuItem', 'name price image isVeg');
+            
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        if (order.userId._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+        
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+module.exports = { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder };
