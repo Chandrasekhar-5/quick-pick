@@ -12,21 +12,17 @@ const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const swaggerSpec = require("./config/swagger");
-<<<<<<< HEAD
-require("dotenv").config();
-=======
 const uploadRoutes = require("./routes/uploadRoutes");
 
->>>>>>> 336727d33076e2ffad2d6a4a23565aa7d66ff62b
 const app = express();
 
 connectDB();
 
-const allowedOrigins = 
+const allowedOrigins =
     process.env.NODE_ENV === 'production'
         ? ['https://quick-pick-student.vercel.app',
             'https://quick-pick-vendor.vercel.app'
-          ]
+        ]
         : ['http://localhost:3000'];
 
 app.use(cors({
