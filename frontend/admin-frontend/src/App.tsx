@@ -13,6 +13,9 @@ import MenuItemsPage from "@/pages/MenuItemsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import WalletPage from "@/pages/WalletPage";
 import SettingsPage from "@/pages/SettingsPage";
+import LoginPage from "@/pages/LoginPage";
+import SignUpPage from "@/pages/SignUpPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,17 +27,21 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route element={<DashboardLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
             <Route path="/vendors" element={<VendorsPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/shops" element={<ShopsPage />} />
             <Route path="/menu-items" element={<MenuItemsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Route>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
