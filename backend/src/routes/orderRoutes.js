@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder } = require('../controllers/orderController');
+const { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder, getAllOrders, updateOrderStatusByAdmin } = require('../controllers/orderController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 /**
@@ -86,6 +86,8 @@ router.get('/vendor-orders', protect, authorize('vendor'), getVendorOrders);
 
 router.get('/stats', protect, getOrderStats);
 
+router.get('/admin/all', protectAdmin, getAllOrders);
+
 
 router.get('/:vendorId/slots', protect, getAvailableSlots);
 
@@ -121,5 +123,7 @@ router.get('/single/:id', protect, getSingleOrder);
  */
 
 router.put('/:id/status', protect, authorize('vendor'), updateOrderStatus);
+
+router.put('/admin/:id/status', protectAdmin, updateOrderStatusByAdmin);
 
 module.exports = router;

@@ -194,4 +194,64 @@ const getSingleOrder = async (req, res) => {
 };
 
 
-module.exports = { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder };
+const getAllOrders = async (req, res) => {
+    try {
+        const { status, search, page = 1, limit = 50 } = req.query;
+        
+        let query = {};
+        if (status && status !== 'all') {
+            query.status = status.toUpperCase();
+        }
+        
+        if (search) {
+            query.$or = [
+                { _id: { $regex: search, $options: 'i' } },
+                { 'userId.name': { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        const orders = await Order.find(query)
+            .populate('userId', 'name email')
+            .populate('vendorId', 'name')
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit));
+        
+        const total = await Order.countDocuments(query);
+        
+        const formatted = orders.map(order => ({
+            id: order._id,
+            student: order.userId?.name || 'Unknown',
+            vendor: order.vendorId?.name || 'Unknown',
+            items: `${order.items.length} items`,
+            total: order.totalAmount,
+            status: order.status.toLowerCase(),
+            time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+        
+        res.json({ orders: formatted, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateOrderStatusByAdmin = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+        
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        order.status = status.toUpperCase();
+        await order.save();
+        
+        res.json({ message: 'Order status updated', order });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+module.exports = { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder, getAllOrders, updateOrderStatusByAdmin };
