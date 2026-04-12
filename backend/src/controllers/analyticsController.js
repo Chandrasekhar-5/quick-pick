@@ -345,11 +345,125 @@ const getTopItems = async (req, res) => {
     }
 };
 
+const getOrdersPerShop = async (req, res) => {
+    try {
+        const ordersByShop = await Order.aggregate([
+            {
+                $match: { status: 'COMPLETED' }
+            },
+            {
+                $group: {
+                    _id: '$vendorId',
+                    orders: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'vendor'
+                }
+            },
+            { $unwind: '$vendor' },
+            {
+                $project: {
+                    shop: '$vendor.name',
+                    orders: 1
+                }
+            },
+            { $sort: { orders: -1 } }
+        ]);
+        
+        res.json(ordersByShop);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getTopItemsBySales = async (req, res) => {
+    try {
+        const topItems = await Order.aggregate([
+            {
+                $match: { status: 'COMPLETED' }
+            },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.menuItem',
+                    orders: { $sum: '$items.quantity' }
+                }
+            },
+            { $sort: { orders: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'menuitems',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'item'
+                }
+            },
+            { $unwind: '$item' },
+            {
+                $project: {
+                    name: '$item.name',
+                    orders: 1
+                }
+            }
+        ]);
+        
+        res.json(topItems);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getVendorPerformance = async (req, res) => {
+    try {
+        const vendorPerformance = await Order.aggregate([
+            {
+                $match: { status: 'COMPLETED' }
+            },
+            {
+                $group: {
+                    _id: '$vendorId',
+                    revenue: { $sum: '$totalAmount' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'vendor'
+                }
+            },
+            { $unwind: '$vendor' },
+            {
+                $project: {
+                    name: '$vendor.name',
+                    revenue: 1
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 5 }
+        ]);
+        
+        res.json(vendorPerformance);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = { 
     getVendorMetrics, 
     getDashboardStats,
     getBestSellers,
     getRevenueData,
     getCategoryDistribution,
-    getTopItems
+    getTopItems,
+    getOrdersPerShop,
+    getTopItemsBySales,
+    getVendorPerformance
 };
