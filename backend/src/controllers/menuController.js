@@ -138,4 +138,66 @@ const getTrendingItems = async (req, res) => {
     }
 };
 
-module.exports = { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem };
+const getAllMenuItemsForAdmin = async (req, res) => {
+    try {
+        const menuItems = await MenuItem.find().populate('vendorId', 'name');
+        
+        const formatted = menuItems.map(item => ({
+            id: item._id,
+            name: item.name,
+            vendor: item.vendorId?.name || 'Unknown',
+            price: item.price,
+            category: item.category,
+            soldToday: 0,
+            totalSold: 0,
+            limitPerSlot: 20,
+            remaining: item.isAvailable ? 20 : 0,
+            status: item.isAvailable ? 'active' : 'out_of_stock',
+            popularity: 'low'
+        }));
+        
+        res.json(formatted);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateMenuItemByAdmin = async (req, res) => {
+    try {
+        const { status, limitPerSlot, price, name, category } = req.body;
+        const item = await MenuItem.findById(req.params.id);
+        
+        if (!item) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+        
+        if (status) {
+            item.isAvailable = status === 'active';
+        }
+        if (price) item.price = price;
+        if (name) item.name = name;
+        if (category) item.category = category;
+        
+        await item.save();
+        
+        res.json({ message: 'Menu item updated', item });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteMenuItemByAdmin = async (req, res) => {
+    try {
+        const item = await MenuItem.findById(req.params.id);
+        if (!item) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+        
+        await item.deleteOne();
+        res.json({ message: 'Menu item deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem, getAllMenuItemsForAdmin, updateMenuItemByAdmin, deleteMenuItemByAdmin };

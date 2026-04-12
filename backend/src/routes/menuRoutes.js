@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem } = require('../controllers/menuController');
+const { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem, getAllMenuItemsForAdmin, updateMenuItemByAdmin, deleteMenuItemByAdmin } = require('../controllers/menuController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 
@@ -82,6 +82,8 @@ router.put('/:id', protect, authorize('vendor'), updateMenuItem);
 
 router.get('/campus/trending', protect, getTrendingItems);
 
+router.get('/admin/all', protectAdmin, getAllMenuItemsForAdmin);
+
 /**
  * @swagger
  * /api/menu/{vendorId}:
@@ -103,5 +105,8 @@ router.get('/:vendorId', getMenuItemsByVendor);
 
 
 router.delete('/:id', protect, authorize('vendor'), deleteMenuItem);
+
+router.put('/admin/:id', protectAdmin, updateMenuItemByAdmin);
+router.delete('/admin/:id', protectAdmin, deleteMenuItemByAdmin);
 
 module.exports = router;
