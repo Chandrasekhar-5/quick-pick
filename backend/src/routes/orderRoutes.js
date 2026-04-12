@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { placeOrder, getMyOrders, getVendorOrders, updateOrderStatus, getOrderStats, getAvailableSlots, getSingleOrder, getAllOrders, updateOrderStatusByAdmin } = require('../controllers/orderController');
-const { protect, authorize } = require('../middlewares/authMiddleware');
+const { protect, authorize, protectAdmin } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem, getAllMenuItemsForAdmin, updateMenuItemByAdmin, deleteMenuItemByAdmin } = require('../controllers/menuController');
-const { protect, authorize } = require('../middlewares/authMiddleware');
+const { protect, authorize, protectAdmin } = require('../middlewares/authMiddleware');
 
 
 router.get('/search', protect, searchItems);

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor, uploadLogo, getAllVendorsForAdmin, toggleVendorStatus, deleteVendor, createVendorByAdmin } = require("../controllers/vendorController");
-const { protect, authorize } = require("../middlewares/authMiddleware");
+const { protect, authorize, protectAdmin } = require("../middlewares/authMiddleware");
 
 
 /**

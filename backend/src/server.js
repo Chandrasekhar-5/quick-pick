@@ -14,6 +14,10 @@ const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const swaggerSpec = require("./config/swagger");
 const uploadRoutes = require("./routes/uploadRoutes");
 const walletRoutes = require('./routes/walletRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const userRoutes = require('./routes/userRoutes');
+const adminWalletRoutes = require('./routes/adminWalletRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -57,6 +61,10 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/upload", uploadRoutes);
 app.use("/api/wallet", walletRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin/users', userRoutes);
+app.use('/api/admin/wallet', adminWalletRoutes);
 
 
 

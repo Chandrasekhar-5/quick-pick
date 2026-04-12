@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getVendorMetrics, getDashboardStats, getBestSellers, getRevenueData, getCategoryDistribution, getTopItems, getOrdersPerShop, getTopItemsBySales, getVendorPerformance } = require('../controllers/analyticsController');
-const { protect, authorize } = require('../middlewares/authMiddleware');
+const { protect, authorize, protectAdmin } = require('../middlewares/authMiddleware');
 
 
 /**
