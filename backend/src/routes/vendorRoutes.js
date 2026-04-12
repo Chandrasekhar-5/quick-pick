@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor } = require("../controllers/vendorController");
+const { createVendor, getVendors, getVendorByOwner, getVendorById, updateVendor, uploadLogo, getAllVendorsForAdmin, toggleVendorStatus, deleteVendor, createVendorByAdmin } = require("../controllers/vendorController");
 const { protect, authorize } = require("../middlewares/authMiddleware");
 
 
@@ -67,6 +67,11 @@ router.put("/me", protect, authorize("vendor"), updateVendor);
 
 
 router.get("/:id", protect, getVendorById);
+
+router.get('/admin/all', protectAdmin, getAllVendorsForAdmin);
+router.put('/admin/:id/toggle', protectAdmin, toggleVendorStatus);
+router.delete('/admin/:id', protectAdmin, deleteVendor);
+router.post('/admin', protectAdmin, createVendorByAdmin);
 
 
 
