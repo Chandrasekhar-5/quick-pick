@@ -1,38 +1,37 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();  // Get login from context
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Mock login logic
-    setTimeout(() => {
+    
+    try {
+      await login(email, password);
+      toast.success("Login successful!");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login failed. Please check your credentials.");
+    } finally {
       setIsLoading(false);
-      if (email === "admin@quickpick.com" && password === "admin123") {
-        localStorage.setItem("isAuthenticated", "true");
-        toast.success("Login successful!");
-        navigate("/");
-      } else {
-        toast.error("Invalid credentials. Try admin@quickpick.com / admin123");
-      }
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Decorative background elements matching the theme */}
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/10 blur-[120px] rounded-full" />
 
@@ -85,7 +84,14 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-1">
               <Button type="submit" className="w-full font-semibold" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
               <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{" "}

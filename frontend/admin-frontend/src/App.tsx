@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardPage from "@/pages/DashboardPage";
 import OrdersPage from "@/pages/OrdersPage";
 import VendorsPage from "@/pages/VendorsPage";
@@ -14,8 +16,6 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import WalletPage from "@/pages/WalletPage";
 import SettingsPage from "@/pages/SettingsPage";
 import LoginPage from "@/pages/LoginPage";
-import SignUpPage from "@/pages/SignUpPage";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,24 +26,27 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route element={<ProtectedRoute />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/vendors" element={<VendorsPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/shops" element={<ShopsPage />} />
-            <Route path="/menu-items" element={<MenuItemsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/wallet" element={<WalletPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/vendors" element={<VendorsPage />} />
+                <Route path="/users" element={<UsersPage />} />
+                <Route path="/shops" element={<ShopsPage />} />
+                <Route path="/menu-items" element={<MenuItemsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/wallet" element={<WalletPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
