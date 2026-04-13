@@ -1,18 +1,98 @@
-import { ShoppingCart, DollarSign, Users, Store, Zap, CalendarDays } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, DollarSign, Users, Store, Zap, CalendarDays, Loader2 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { dashboardStats, revenueData, ordersPerDay, topVendors, orders } from "@/lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import API from "@/services/api";
+import { toast } from "sonner";
+
+interface DashboardStats {
+  totalOrders: number;
+  totalRevenue: number;
+  totalUsers: number;
+  activeVendors: number;
+  activeOrders: number;
+  todayOrders: number;
+}
+
+interface RevenueData {
+  month: string;
+  revenue: number;
+}
+
+interface OrderPerDay {
+  day: string;
+  orders: number;
+}
+
+interface TopVendor {
+  name: string;
+  revenue: number;
+  orders: number;
+}
+
+interface RecentOrder {
+  id: string;
+  student: string;
+  vendor: string;
+  items: string;
+  total: number;
+  status: string;
+  time: string;
+}
 
 export default function DashboardPage() {
-  const stats = [
-    { title: "Total Orders", value: dashboardStats.totalOrders.toLocaleString(), icon: ShoppingCart, trend: "+12.5% from last month", trendUp: true },
-    { title: "Total Revenue", value: `₹${(dashboardStats.totalRevenue / 1000).toFixed(1)}K`, icon: DollarSign, trend: "+8.2% from last month", trendUp: true },
-    { title: "Total Users", value: dashboardStats.totalUsers.toLocaleString(), icon: Users, trend: "+5.1% from last month", trendUp: true },
-    { title: "Active Vendors", value: dashboardStats.activeVendors.toString(), icon: Store },
-    { title: "Active Orders", value: dashboardStats.activeOrders.toString(), icon: Zap, trend: "Live", trendUp: true },
-    { title: "Today's Orders", value: dashboardStats.todayOrders.toString(), icon: CalendarDays, trend: "-3.2% from yesterday", trendUp: false },
-  ];
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [ordersPerDay, setOrdersPerDay] = useState<OrderPerDay[]>([]);
+  const [topVendors, setTopVendors] = useState<TopVendor[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const [statsRes, revenueRes, ordersPerDayRes, topVendorsRes, recentOrdersRes] = await Promise.all([
+        API.get('/dashboard/stats'),
+        API.get('/dashboard/revenue'),
+        API.get('/dashboard/orders-per-day'),
+        API.get('/dashboard/top-vendors'),
+        API.get('/dashboard/recent-orders')
+      ]);
+
+      setStats(statsRes.data);
+      setRevenueData(revenueRes.data);
+      setOrdersPerDay(ordersPerDayRes.data);
+      setTopVendors(topVendorsRes.data);
+      setRecentOrders(recentOrdersRes.data);
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const statCards = stats ? [
+    { title: "Total Orders", value: stats.totalOrders.toLocaleString(), icon: ShoppingCart, trend: "+12.5% from last month", trendUp: true },
+    { title: "Total Revenue", value: `₹${(stats.totalRevenue / 1000).toFixed(1)}K`, icon: DollarSign, trend: "+8.2% from last month", trendUp: true },
+    { title: "Total Users", value: stats.totalUsers.toLocaleString(), icon: Users, trend: "+5.1% from last month", trendUp: true },
+    { title: "Active Vendors", value: stats.activeVendors.toString(), icon: Store },
+    { title: "Active Orders", value: stats.activeOrders.toString(), icon: Zap, trend: "Live", trendUp: true },
+    { title: "Today's Orders", value: stats.todayOrders.toString(), icon: CalendarDays, trend: "-3.2% from yesterday", trendUp: false },
+  ] : [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -22,7 +102,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {stats.map((s) => (
+        {statCards.map((s) => (
           <StatCard key={s.title} {...s} />
         ))}
       </div>
@@ -97,14 +177,14 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.slice(0, 5).map((o) => (
+              {recentOrders.map((o) => (
                 <tr key={o.id} className="border-b border-border/50 hover:bg-secondary/50 transition-colors">
-                  <td className="py-3 px-2 font-mono text-primary">{o.id}</td>
+                  <td className="py-3 px-2 font-mono text-primary">{o.id.slice(-8)}</td>
                   <td className="py-3 px-2">{o.student}</td>
                   <td className="py-3 px-2">{o.vendor}</td>
                   <td className="py-3 px-2 text-muted-foreground">{o.items}</td>
                   <td className="py-3 px-2 font-medium">₹{o.total}</td>
-                  <td className="py-3 px-2"><StatusBadge status={o.status} /></td>
+                  <td className="py-3 px-2"><StatusBadge status={o.status as any} /></td>
                   <td className="py-3 px-2 text-muted-foreground">{o.time}</td>
                 </tr>
               ))}
