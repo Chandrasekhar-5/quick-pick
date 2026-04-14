@@ -1,11 +1,58 @@
-import { transactions } from "@/lib/mockData";
+import { useState, useEffect } from "react";
 import { StatCard } from "@/components/StatCard";
-import { DollarSign, ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import { DollarSign, ArrowDownLeft, ArrowUpRight, Wallet, Loader2 } from "lucide-react";
+import API from "@/services/api";
+import { toast } from "sonner";
+
+interface Transaction {
+  id: string;
+  user: string;
+  type: 'payment' | 'refund' | 'topup';
+  amount: number;
+  date: string;
+  status: 'completed' | 'pending';
+}
+
+interface WalletStats {
+  totalPayments: number;
+  totalRefunds: number;
+  totalTopups: number;
+}
 
 export default function WalletPage() {
-  const totalPayments = transactions.filter((t) => t.type === "payment").reduce((s, t) => s + t.amount, 0);
-  const totalRefunds = transactions.filter((t) => t.type === "refund").reduce((s, t) => s + t.amount, 0);
-  const totalTopups = transactions.filter((t) => t.type === "topup").reduce((s, t) => s + t.amount, 0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [stats, setStats] = useState<WalletStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWalletData();
+  }, []);
+
+  const fetchWalletData = async () => {
+    setIsLoading(true);
+    try {
+      const [transactionsRes, statsRes] = await Promise.all([
+        API.get('/admin/wallet/transactions'),
+        API.get('/admin/wallet/stats')
+      ]);
+      
+      setTransactions(transactionsRes.data);
+      setStats(statsRes.data);
+    } catch (error) {
+      console.error("Failed to fetch wallet data:", error);
+      toast.error("Failed to load wallet data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -15,9 +62,9 @@ export default function WalletPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard title="Total Payments" value={`₹${totalPayments.toLocaleString()}`} icon={DollarSign} />
-        <StatCard title="Total Refunds" value={`₹${totalRefunds.toLocaleString()}`} icon={ArrowDownLeft} />
-        <StatCard title="Total Top-ups" value={`₹${totalTopups.toLocaleString()}`} icon={ArrowUpRight} />
+        <StatCard title="Total Payments" value={`₹${stats?.totalPayments.toLocaleString() || 0}`} icon={DollarSign} />
+        <StatCard title="Total Refunds" value={`₹${stats?.totalRefunds.toLocaleString() || 0}`} icon={ArrowDownLeft} />
+        <StatCard title="Total Top-ups" value={`₹${stats?.totalTopups.toLocaleString() || 0}`} icon={ArrowUpRight} />
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -36,7 +83,7 @@ export default function WalletPage() {
             <tbody>
               {transactions.map((t) => (
                 <tr key={t.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                  <td className="py-3 px-4 font-mono text-primary">{t.id}</td>
+                  <td className="py-3 px-4 font-mono text-primary">{t.id.slice(-8)}</td>
                   <td className="py-3 px-4">{t.user}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
@@ -47,16 +94,25 @@ export default function WalletPage() {
                       {t.type === "payment" ? <Wallet className="w-3 h-3" /> : t.type === "refund" ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                       {t.type}
                     </span>
-                  </td>
+                   </td>
                   <td className="py-3 px-4 font-medium">₹{t.amount}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{t.date}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{new Date(t.date).toLocaleDateString()}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                       t.status === "completed" ? "bg-success/15 text-success border-success/30" : "bg-warning/15 text-warning border-warning/30"
-                    }`}>{t.status}</span>
-                  </td>
+                    }`}>
+                      {t.status}
+                    </span>
+                   </td>
                 </tr>
               ))}
+              {transactions.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                    No transactions found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
