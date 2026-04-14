@@ -1,28 +1,47 @@
-import { useState, useMemo } from "react";
-import { menuItems as initialItems, type MenuItemStatus, type PopularityTag } from "@/lib/mockData";
+import { useState, useEffect, useMemo } from "react";
+import { MenuItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UtensilsCrossed, TrendingUp, AlertTriangle, Ban } from "lucide-react";
+import { Pencil, Trash2, UtensilsCrossed, TrendingUp, AlertTriangle, Ban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import API from "@/services/api";
 
-const statusConfig: Record<MenuItemStatus, { label: string; class: string }> = {
+const statusConfig: Record<string, { label: string; class: string }> = {
   active: { label: "Active", class: "bg-success/15 text-success border-success/30" },
   out_of_stock: { label: "Out of Stock", class: "bg-destructive/15 text-destructive border-destructive/30" },
   disabled: { label: "Disabled", class: "bg-muted text-muted-foreground border-border" },
   slot_full: { label: "Slot Full", class: "bg-warning/15 text-warning border-warning/30" },
 };
 
-const popularityConfig: Record<PopularityTag, { label: string; class: string }> = {
+const popularityConfig: Record<string, { label: string; class: string }> = {
   top_seller: { label: "🔥 Top Seller", class: "bg-primary/15 text-primary border-primary/30" },
   popular: { label: "⭐ Popular", class: "bg-info/15 text-info border-info/30" },
   low: { label: "Low", class: "bg-secondary text-muted-foreground border-border" },
 };
 
 export default function MenuItemsPage() {
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState<MenuItem[]>([]);
   const [vendorFilter, setVendorFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
+
+  const fetchMenuItems = async () => {
+    setIsLoading(true);
+    try {
+      const res = await API.get('/menu/admin/all');
+      setItems(res.data);
+    } catch (error) {
+      console.error("Failed to fetch menu items:", error);
+      toast.error("Failed to load menu items");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const vendors = useMemo(() => [...new Set(items.map((i) => i.vendor))], [items]);
   const categories = useMemo(() => [...new Set(items.map((i) => i.category))], [items]);
@@ -43,10 +62,26 @@ export default function MenuItemsPage() {
     return { active, outOfStock, totalSoldToday, slotFull };
   }, [items]);
 
-  const deleteItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    toast.success("Item removed");
+  const deleteItem = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    
+    try {
+      await API.delete(`/menu/admin/${id}`);
+      toast.success(`${name} deleted successfully`);
+      fetchMenuItems();
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      toast.error("Failed to delete menu item");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +144,7 @@ export default function MenuItemsPage() {
                 <th className="text-right py-3 px-4 font-medium text-muted-foreground">Limit/Slot</th>
                 <th className="text-right py-3 px-4 font-medium text-muted-foreground">Remaining</th>
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Edit</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -150,8 +185,10 @@ export default function MenuItemsPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem(item.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.info("Edit feature coming soon")}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteItem(item.id, item.name)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -160,7 +197,11 @@ export default function MenuItemsPage() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={10} className="py-8 text-center text-muted-foreground">No items match the selected filters.</td></tr>
+                <tr>
+                  <td colSpan={10} className="py-8 text-center text-muted-foreground">
+                    No items match the selected filters.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
