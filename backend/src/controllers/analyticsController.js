@@ -285,28 +285,43 @@ const getCategoryDistribution = async (req, res) => {
 
 const getTopItems = async (req, res) => {
     try {
-        const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
-        if (!vendorShop) {
-            return res.status(404).json({ message: "No shop found" });
+        let matchStage = {
+            status: { $in: ['COMPLETED', 'Completed'] }
+        };
+
+        // 🔥 ROLE-BASED FILTER
+        if (req.user.role === "vendor") {
+            const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
+
+            if (!vendorShop) {
+                return res.status(404).json({ message: "No shop found" });
+            }
+
+            matchStage.vendorId = vendorShop._id;
         }
 
+        // 👉 super_admin → no vendor filter → all vendors
+
         const topItems = await Order.aggregate([
-            {
-                $match: {
-                    vendorId: vendorShop._id,
-                    status: { $in: ['COMPLETED', 'Completed'] }
-                }
-            },
+            { $match: matchStage },
+
             { $unwind: '$items' },
+
             {
                 $group: {
                     _id: '$items.menuItem',
                     totalSales: { $sum: '$items.quantity' },
-                    revenue: { $sum: { $multiply: ['$items.quantity', '$items.priceAtOrder'] } }
+                    revenue: {
+                        $sum: {
+                            $multiply: ['$items.quantity', '$items.priceAtOrder']
+                        }
+                    }
                 }
             },
+
             { $sort: { totalSales: -1 } },
             { $limit: 4 },
+
             {
                 $lookup: {
                     from: 'menuitems',
@@ -315,7 +330,9 @@ const getTopItems = async (req, res) => {
                     as: 'details'
                 }
             },
+
             { $unwind: '$details' },
+
             {
                 $project: {
                     name: '$details.name',
@@ -327,7 +344,13 @@ const getTopItems = async (req, res) => {
                         $cond: [
                             { $gt: ['$totalSales', 50] },
                             'Trending',
-                            { $cond: [{ $gt: ['$totalSales', 20] }, 'Growing', 'New' ] }
+                            {
+                                $cond: [
+                                    { $gt: ['$totalSales', 20] },
+                                    'Growing',
+                                    'New'
+                                ]
+                            }
                         ]
                     }
                 }
@@ -339,6 +362,7 @@ const getTopItems = async (req, res) => {
         }
 
         res.json(topItems);
+
     } catch (error) {
         console.error("Error in getTopItems:", error);
         res.status(500).json({ message: error.message });

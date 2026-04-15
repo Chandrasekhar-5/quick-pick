@@ -40,7 +40,7 @@ router.get('/revenue/:period', protect, authorize('vendor'), getRevenueData);
 router.get('/category-distribution', protect, authorize('vendor'), getCategoryDistribution);
 
 
-router.get('/top-items', protect, authorize('vendor'), getTopItems);
+router.get('/top-items', protect, authorize('vendor', 'super_admin'), getTopItems);
 
 
 router.get('/orders-per-shop', protectAdmin, getOrdersPerShop);
