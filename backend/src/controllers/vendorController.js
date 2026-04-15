@@ -32,6 +32,7 @@ const getVendors = async (req, res) => {
         const vendors = await Vendor.find({ collegeId: req.user.college });
         res.status(200).json(vendors);
     } catch (error) {
+        console.log("error fetching vendors:", error);
         res.status(500).json({ message: error.message });
     }
 };
