@@ -300,8 +300,6 @@ const getTopItems = async (req, res) => {
             matchStage.vendorId = vendorShop._id;
         }
 
-        // 👉 super_admin → no vendor filter → all vendors
-
         const topItems = await Order.aggregate([
             { $match: matchStage },
 
@@ -373,7 +371,7 @@ const getOrdersPerShop = async (req, res) => {
     try {
         const ordersByShop = await Order.aggregate([
             {
-                $match: { status: 'COMPLETED' }
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
             },
             {
                 $group: {
@@ -399,9 +397,10 @@ const getOrdersPerShop = async (req, res) => {
             { $sort: { orders: -1 } }
         ]);
         
-        res.json(ordersByShop);
+        res.json(ordersByShop.length ? ordersByShop : [{ shop: "No data available", orders: 0 }]);
     } catch (error) {
         res.status(500).json({ message: error.message });
+        res.json([{ shop: "No data available", orders: 0 }]);
     }
 };
 
@@ -409,7 +408,7 @@ const getTopItemsBySales = async (req, res) => {
     try {
         const topItems = await Order.aggregate([
             {
-                $match: { status: 'COMPLETED' }
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
             },
             { $unwind: '$items' },
             {
@@ -437,9 +436,10 @@ const getTopItemsBySales = async (req, res) => {
             }
         ]);
         
-        res.json(topItems);
+        res.json(topItems.length ? topItems : [{ name: "No data available", orders: 0 }]);
     } catch (error) {
         res.status(500).json({ message: error.message });
+        res.json([{ name: "No data available", orders: 0 }]);
     }
 };
 
@@ -447,7 +447,7 @@ const getVendorPerformance = async (req, res) => {
     try {
         const vendorPerformance = await Order.aggregate([
             {
-                $match: { status: 'COMPLETED' }
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
             },
             {
                 $group: {
@@ -474,9 +474,10 @@ const getVendorPerformance = async (req, res) => {
             { $limit: 5 }
         ]);
         
-        res.json(vendorPerformance);
+        res.json(vendorPerformance.length ? vendorPerformance : [{ name: "No data available", revenue: 0 }]);
     } catch (error) {
         res.status(500).json({ message: error.message });
+        res.json([{ name: "No data available", revenue: 0 }]);
     }
 };
 
