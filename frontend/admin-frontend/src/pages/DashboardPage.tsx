@@ -195,3 +195,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+// tried changing the tooltipstyle to match the new dark theme and added a loading spinner while the data is being fetched. Also added error handling to show a toast notification if the API call fails. but didnt work as expected, the charts still look a bit off and the loading state is not showing up properly. might need to revisit the API calls and how the data is being set in state.
