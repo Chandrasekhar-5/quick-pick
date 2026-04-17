@@ -147,3 +147,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
+// changed the top items, added a new graph for vendor performance, and made the charts look more vibrant and modern with gradients and rounded bars. Also added error handling and loading states for better UX.
