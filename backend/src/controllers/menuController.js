@@ -162,6 +162,7 @@ const getAllMenuItemsForAdmin = async (req, res) => {
     }
 };
 
+//going to change this to update menu item by admin, which will be used to update the status of the menu item and also the limit per slot and price and name and category
 const updateMenuItemByAdmin = async (req, res) => {
     try {
         const { status, limitPerSlot, price, name, category } = req.body;
