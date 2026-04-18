@@ -5,23 +5,45 @@ const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({ role: 'student' }).select('-password');
         
-        const usersWithStats = await Promise.all(users.map(async (user) => {
-            const orders = await Order.find({ userId: user._id });
-            const totalSpent = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-            
+        const ordersAgg = await Order.aggregate([
+            {
+                $match: { 
+                    status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$userId',
+                    totalSpent: { $sum: '$totalAmount' },
+                    orderCount: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        const userStats = new Map();
+        ordersAgg.forEach(stat => {
+            userStats.set(stat._id.toString(), {
+                spent: stat.totalSpent,
+                orders: stat.orderCount
+            });
+        });
+        
+        const usersWithStats = users.map(user => {
+            const stats = userStats.get(user._id.toString()) || { spent: 0, orders: 0 };
             return {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                orders: orders.length,
-                spent: totalSpent,
+                orders: stats.orders,
+                spent: stats.spent,
                 joined: user.createdAt.toISOString().split('T')[0],
                 blocked: user.blocked || false
             };
-        }));
+        });
         
         res.json(usersWithStats);
     } catch (error) {
+        console.error("Error in getAllUsers:", error);
         res.status(500).json({ message: error.message });
     }
 };
