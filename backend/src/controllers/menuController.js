@@ -1,5 +1,6 @@
 const MenuItem = require("../models/MenuItem");
 const Vendor = require("../models/Vendor");
+const Order = require("../models/Order");
 
 
 const searchItems = async (req, res) => {
@@ -142,47 +143,92 @@ const getAllMenuItemsForAdmin = async (req, res) => {
     try {
         const menuItems = await MenuItem.find().populate('vendorId', 'name');
         
-        const formatted = menuItems.map(item => ({
-            id: item._id,
-            name: item.name,
-            vendor: item.vendorId?.name || 'Unknown',
-            price: item.price,
-            category: item.category,
-            soldToday: 0,
-            totalSold: 0,
-            limitPerSlot: 20,
-            remaining: item.isAvailable ? 20 : 0,
-            status: item.isAvailable ? 'active' : 'out_of_stock',
-            popularity: 'low'
-        }));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayOrders = await Order.find({
+            status: { $in: ['COMPLETED', 'Completed', 'completed'] },
+            createdAt: { $gte: today, $lt: tomorrow }
+        });
+        
+        const soldCountMap = new Map();
+        todayOrders.forEach(order => {
+            order.items.forEach(item => {
+                const menuItemId = item.menuItem.toString();
+                const currentCount = soldCountMap.get(menuItemId) || 0;
+                soldCountMap.set(menuItemId, currentCount + item.quantity);
+            });
+        });
+        
+        const allOrders = await Order.find({
+            status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+        });
+        
+        const totalSoldMap = new Map();
+        allOrders.forEach(order => {
+            order.items.forEach(item => {
+                const menuItemId = item.menuItem.toString();
+                const currentCount = totalSoldMap.get(menuItemId) || 0;
+                totalSoldMap.set(menuItemId, currentCount + item.quantity);
+            });
+        });
+        
+        const formatted = menuItems.map(item => {
+            const soldToday = soldCountMap.get(item._id.toString()) || 0;
+            const totalSold = totalSoldMap.get(item._id.toString()) || 0;
+            
+            let popularity = 'low';
+            if (totalSold > 500) popularity = 'top_seller';
+            else if (totalSold > 100) popularity = 'popular';
+            
+            let status = 'active';
+            if (!item.isAvailable) status = 'out_of_stock';
+            else if (soldToday >= 20) status = 'slot_full';
+            
+            return {
+                id: item._id,
+                name: item.name,
+                vendor: item.vendorId?.name || 'Unknown',
+                price: item.price,
+                category: item.category || 'General',
+                soldToday,
+                totalSold,
+                limitPerSlot: 20,
+                remaining: Math.max(0, 20 - soldToday),
+                status,
+                popularity
+            };
+        });
         
         res.json(formatted);
     } catch (error) {
+        console.error("Error in getAllMenuItemsForAdmin:", error);
         res.status(500).json({ message: error.message });
     }
 };
 
-//going to change this to update menu item by admin, which will be used to update the status of the menu item and also the limit per slot and price and name and category
+
 const updateMenuItemByAdmin = async (req, res) => {
     try {
-        const { status, limitPerSlot, price, name, category } = req.body;
+        const { status, limitPerSlot, price, name, category, isAvailable } = req.body;
         const item = await MenuItem.findById(req.params.id);
         
         if (!item) {
             return res.status(404).json({ message: 'Menu item not found' });
         }
         
-        if (status) {
-            item.isAvailable = status === 'active';
-        }
         if (price) item.price = price;
         if (name) item.name = name;
         if (category) item.category = category;
+        if (isAvailable !== undefined) item.isAvailable = isAvailable;
         
         await item.save();
         
         res.json({ message: 'Menu item updated', item });
     } catch (error) {
+        console.error("Error in updateMenuItemByAdmin:", error);
         res.status(500).json({ message: error.message });
     }
 };
