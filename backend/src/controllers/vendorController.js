@@ -105,25 +105,47 @@ const getAllVendorsForAdmin = async (req, res) => {
             .populate('ownerId', 'name email')
             .populate('collegeId', 'name');
         
-        const vendorsWithStats = await Promise.all(vendors.map(async (vendor) => {
-            const orders = await Order.find({ vendorId: vendor._id, status: 'COMPLETED' });
-            const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-            
+        const ordersAgg = await Order.aggregate([
+            {
+                $match: { 
+                    status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$vendorId',
+                    totalRevenue: { $sum: '$totalAmount' },
+                    totalOrders: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        const vendorStats = new Map();
+        ordersAgg.forEach(stat => {
+            vendorStats.set(stat._id.toString(), {
+                revenue: stat.totalRevenue,
+                orders: stat.totalOrders
+            });
+        });
+        
+        const vendorsWithStats = vendors.map(vendor => {
+            const stats = vendorStats.get(vendor._id.toString()) || { revenue: 0, orders: 0 };
             return {
                 id: vendor._id,
                 name: vendor.name,
                 shop: vendor.name,
-                revenue: totalRevenue,
-                orders: orders.length,
+                revenue: stats.revenue,
+                orders: stats.orders,
                 rating: 4.5,
                 enabled: vendor.isOpen,
                 owner: vendor.ownerId?.name,
                 email: vendor.ownerId?.email
             };
-        }));
+        });
         
         res.json(vendorsWithStats);
     } catch (error) {
+        console.error("Error in getAllVendorsForAdmin:", error);
         res.status(500).json({ message: error.message });
     }
 };
