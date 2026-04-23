@@ -19,17 +19,15 @@ Backend
 * Node.js
 * Express.js
 * MongoDB (Mongoose)
+* JSON Web Tokens (JWT)
 
 Frontend
 
 * React.js
+* Tailwind CSS
 * Vite
 * TypeScript
-
-Authentication
-
-* JSON Web Tokens (JWT)
-* bcryptjs
+* React Router (v6.4+)
 
 ## Repository Structure
 
@@ -54,7 +52,7 @@ README.md
 
 ## Current Development Status
 
-The Vendor Frontend is completely integrated with the backend. Moving on to Student Frontend.
+The Student and Vendor frontends are fully integrated with the backend. Current development is focused on the Admin dashboard and final deployment orchestration.
 
 Completed:
 
@@ -65,10 +63,11 @@ Completed:
 * Analytics aggregation pipelines
 * Global error handling
 * Student frontend integration
+* Vendor frontend integration
 
 Next Phase:
 
-* Admin dashboard integration
+* Finalize Admin dashboard features
 * Deployment preparation
 
 ## Local Development Setup
@@ -107,6 +106,12 @@ npm run dev
 Frontend runs at:
 
 http://localhost:3000
+
+### Run Admin Frontend
+
+cd frontend/admin-frontend
+npm install
+npm run dev
 
 ## Testing the Application
 
