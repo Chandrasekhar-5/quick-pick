@@ -1,6 +1,6 @@
-import winston, { transport } from "winston";
-import {Logtail} from "@logtail/node";
-import {LogtailTransport} from "@logtail/winston";
+const winston = require("winston");
+const { Logtail } = require("@logtail/node");
+const { LogtailTransport } = require("@logtail/winston");
 
 const isprod = process.env.NODE_ENV === "production";
 
@@ -8,7 +8,7 @@ const transports = [
     new winston.transports.Console()
 ];
 
-const { combine, timestamp, json, prettyPrint, errors, cli} = winston.format;
+const { combine, timestamp, json, prettyPrint, errors} = winston.format;
 
 
 if (isprod) {
@@ -23,8 +23,8 @@ const logger = winston.createLogger({
     level: isprod ? "info" : "debug",
     format: isprod
         ? combine(errors({ stack : true }), timestamp(), json(), prettyPrint())
-        : combine(errors({ stack : true }), timestamp(), cli()),
+        : combine(errors({ stack : true }), timestamp(), json(), prettyPrint()),
     transports
 });
 
-export default logger;
+module.exports = logger;
