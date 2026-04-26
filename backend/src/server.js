@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const swaggerUi = require("swagger-ui-express");
+const morgan = require("morgan");
+const requestIdMiddleware = require("./middlewares/requestIdMiddleware");
 
 const authRoutes = require("../src/routes/authRoutes");
 const collegeRoutes = require("../src/routes/collegeRoutes");
@@ -19,7 +21,12 @@ const userRoutes = require('./routes/userRoutes');
 const adminWalletRoutes = require('./routes/adminWalletRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
+
 const app = express();
+
+morgan.token("id", (req) => req.id);
+app.use(morgan(":id :method :url :status :response-time ms"));
+app.use(requestIdMiddleware);
 
 connectDB();
 
@@ -47,9 +54,9 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
 
-// used wallet routes
+
+app.use(express.json());
 
 
 app.use("/api/auth", authRoutes);
