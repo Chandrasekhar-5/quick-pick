@@ -127,14 +127,59 @@ const getMenuItemsByVendor = async (req, res, next) => {
 const getTrendingItems = async (req, res) => {
     try {
         const campusVendors = await Vendor.find({ collegeId: req.user.college }).select('_id');
-
         const vendorIds = campusVendors.map(vendor => vendor._id);
-        const trendingItems = await MenuItem.find({ vendorId: { $in: vendorIds } })
-            .populate('vendorId', 'name')
-            .limit(8);
+
+        const trendingItems = await Order.aggregate([
+            {
+                $match: {
+                    vendorId: { $in: vendorIds },
+                    status: { $in: ['COMPLETED', 'completed', 'Completed'] }
+                }
+            },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.menuItem',
+                    totalQuantity: { $sum: '$items.quantity' }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: 'menuitems',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'itemDetails'
+                }
+            },
+            { $unwind: '$itemDetails' },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: 'itemDetails.vendorId',
+                    foreignField: '_id',
+                    as: 'vendorDetails'
+                }
+            },
+            { $unwind: '$vendorDetails' },
+            {
+                $project: {
+                    _id: '$itemDetails._id',
+                    name: '$itemDetails.name',
+                    price: '$itemDetails.price',
+                    image: '$itemDetails.image',
+                    isVeg: '$itemDetails.isVeg',
+                    vendorId: '$vendorDetails._id',
+                    vendorName: '$vendorDetails.name',
+                    totalSold: '$totalQuantity'
+                }
+            }
+        ]);
 
         res.status(200).json(trendingItems);
     } catch (error) {
+        console.error("Error in getTrendingItems:", error);
         res.status(500).json({ message: error.message });
     }
 };
