@@ -9,33 +9,53 @@ const getDashboardStats = async (req, res) => {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const [totalOrders, totalRevenue, totalUsers, activeVendors, activeOrders, todayOrders] = await Promise.all([
+        const [totalOrders, totalRevenueAgg, totalUsers, activeVendors, activeOrders, todayOrders] = await Promise.all([
             Order.countDocuments(),
-            Order.aggregate([{ $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
+            Order.aggregate([
+                { 
+                    $match: { 
+                        status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+            ]),
             User.countDocuments({ role: 'student' }),
             Vendor.countDocuments({ isOpen: true }),
-            Order.countDocuments({ status: { $in: ['PENDING', 'PREPARING', 'READY'] } }),
-            Order.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
+            Order.countDocuments({ 
+                status: { $in: ['PENDING', 'PREPARING', 'READY', 'pending', 'preparing', 'ready', 'Pending', 'Preparing', 'Ready'] }
+            }),
+            Order.countDocuments({ 
+                createdAt: { $gte: today, $lt: tomorrow }
+            })
         ]);
 
         res.json({
             totalOrders,
-            totalRevenue: totalRevenue[0]?.total || 0,
+            totalRevenue: totalRevenueAgg[0]?.total || 0,
             totalUsers,
             activeVendors,
             activeOrders,
             todayOrders
         });
     } catch (error) {
+        console.error("Error in getDashboardStats:", error);
         res.status(500).json({ message: error.message });
     }
 };
 
 const getRevenueData = async (req, res) => {
     try {
+        const currentYear = new Date().getFullYear();
+        
         const revenueByMonth = await Order.aggregate([
             {
-                $match: { status: 'COMPLETED' }
+                $match: { 
+                    status: { $in: ['COMPLETED', 'Completed', 'completed'] },
+                    createdAt: {
+                        $gte: new Date(currentYear, 0, 1),
+                        $lt: new Date(currentYear + 1, 0, 1)
+                    }
+                }
             },
             {
                 $group: {
@@ -54,16 +74,38 @@ const getRevenueData = async (req, res) => {
 
         res.json(result);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error in getRevenueData:", error);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        res.json(months.map(month => ({ month, revenue: 0 })));
     }
 };
 
 const getOrdersPerDay = async (req, res) => {
     try {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        
+        const orders = await Order.find({
+            createdAt: { $gte: startOfWeek, $lt: endOfWeek }
+        });
+        
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const result = days.map(day => ({ day, orders: 0 }));
+        const result = days.map((day, index) => {
+            const dayOrders = orders.filter(order => {
+                const orderDay = new Date(order.createdAt).getDay();
+                return orderDay === index;
+            });
+            return { day, orders: dayOrders.length };
+        });
+        
         res.json(result);
     } catch (error) {
+        console.error("Error in getOrdersPerDay:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -72,7 +114,9 @@ const getTopVendors = async (req, res) => {
     try {
         const topVendors = await Order.aggregate([
             {
-                $match: { status: 'COMPLETED' }
+                $match: { 
+                    status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+                }
             },
             {
                 $group: {
@@ -101,9 +145,10 @@ const getTopVendors = async (req, res) => {
             }
         ]);
 
-        res.json(topVendors);
+        res.json(topVendors.length ? topVendors : []);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error in getTopVendors:", error);
+        res.json([]);
     }
 };
 
@@ -116,19 +161,29 @@ const getRecentOrders = async (req, res) => {
             .limit(10);
 
         const formatted = recentOrders.map(order => ({
-            id: order._id,
+            id: order._id.toString().slice(-8).toUpperCase(),
             student: order.userId?.name || 'Unknown',
             vendor: order.vendorId?.name || 'Unknown',
-            items: `${order.items.length} items`,
+            items: `${order.items.length} item${order.items.length !== 1 ? 's' : ''}`,
             total: order.totalAmount,
-            status: order.status.toLowerCase(),
-            time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            status: order.status?.toLowerCase() || 'pending',
+            time: new Date(order.createdAt).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            })
         }));
 
         res.json(formatted);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error in getRecentOrders:", error);
+        res.json([]);
     }
 };
 
-module.exports = { getDashboardStats, getRevenueData, getOrdersPerDay, getTopVendors, getRecentOrders };
+module.exports = { 
+    getDashboardStats, 
+    getRevenueData, 
+    getOrdersPerDay, 
+    getTopVendors, 
+    getRecentOrders 
+};

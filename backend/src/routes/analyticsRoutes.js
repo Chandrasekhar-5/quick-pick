@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { getVendorMetrics, getDashboardStats, getBestSellers, getRevenueData, getCategoryDistribution, getTopItems } = require('../controllers/analyticsController');
-const { protect, authorize } = require('../middlewares/authMiddleware');
+const { getVendorMetrics, getDashboardStats, getBestSellers, getRevenueData, getCategoryDistribution, getTopItems, getOrdersPerShop, getTopItemsBySales, getVendorPerformance } = require('../controllers/analyticsController');
+const { protect, authorize, protectAdmin } = require('../middlewares/authMiddleware');
 
 
 /**
@@ -40,7 +40,12 @@ router.get('/revenue/:period', protect, authorize('vendor'), getRevenueData);
 router.get('/category-distribution', protect, authorize('vendor'), getCategoryDistribution);
 
 
-router.get('/top-items', protect, authorize('vendor'), getTopItems);
+router.get('/top-items', protect, authorize('vendor', 'super_admin'), getTopItems);
+
+
+router.get('/orders-per-shop', protectAdmin, getOrdersPerShop);
+router.get('/top-items', protectAdmin, getTopItemsBySales);
+router.get('/vendor-performance', protectAdmin, getVendorPerformance);
 
 
 module.exports = router;

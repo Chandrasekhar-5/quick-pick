@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const logger = require("../config/logger");
 
 const generateToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -11,6 +12,11 @@ const registerUser = async (req, res) => {
 
         const userExists = await User.findOne({ email });
         if (userExists) {
+            logger.warn({
+                message: "Register failed - user already exists",
+                email,
+                requestId: req.id
+            });
              return res.status(400).json({ message: "User already exists" });
         }
 
@@ -23,6 +29,12 @@ const registerUser = async (req, res) => {
         });
 
         if (user) {
+            logger.info({
+                message: "User registered successfully",
+                userId: user._id,
+                email,
+                requestId: req.id
+            });
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
@@ -31,10 +43,15 @@ const registerUser = async (req, res) => {
                 token: generateToken(user._id)
             });
         } else {
+            logger.warn({
+                message: "Register failed - invalid data",
+                email,
+                requestId: req.id
+            });
             return res.status(400).json({ message: "Invalid user data" });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
 
@@ -45,6 +62,12 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
+            logger.info({
+                message: "Login success",
+                userId: user._id,
+                email,
+                requestId: req.id
+            });
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -53,10 +76,15 @@ const loginUser = async (req, res) => {
                 token: generateToken(user._id)
             });
         } else {
+            logger.warn({
+                message: "Login failed - invalid credentials",
+                email,
+                requestId: req.id
+            });
             res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
 
@@ -71,6 +99,11 @@ const updateProfile = async (req, res) => {
         const user = await User.findById(req.user._id);
         
         if (!user) {
+            logger.warn({
+                message: "Update profile failed - user not found",
+                userId: req.user._id,
+                requestId: req.id
+            });
             return res.status(404).json({ message: "User not found" });
         }
         
@@ -80,6 +113,12 @@ const updateProfile = async (req, res) => {
         if (hostel) user.hostel = hostel;
         
         await user.save();
+
+        logger.info({
+            message: "Profile updated",
+            userId: user._id,
+            requestId: req.id
+        });
 
          res.json({
             message: "Profile updated successfully",
@@ -94,7 +133,7 @@ const updateProfile = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
 

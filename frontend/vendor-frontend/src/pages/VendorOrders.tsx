@@ -6,41 +6,41 @@ import OrderCard from '../components/vendor/OrderCard.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 import API from '../services/api'; // NEW: Import API
 
-const statuses =['All', OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.COMPLETED, OrderStatus.CANCELLED];
+const statuses = ['All', OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.COMPLETED, OrderStatus.CANCELLED];
 
 export default function VendorOrders() {
   const location = useLocation();
-  const [orders, setOrders] = useState<Order[]>([]); 
+  const [orders, setOrders] = useState<Order[]>([]);
   const [activeStatus, setActiveStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
-  const[isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  
+
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
       const response = await API.get('/orders/vendor-orders');
-      
-      const mappedOrders = response.data.map((dbOrder: any) => {
-  console.log("Backend status:", dbOrder.status); // <-- add here
 
-  return {
-    id: dbOrder._id,
-    customerName: dbOrder.userId?.name || 'Unknown Customer',
-    items: dbOrder.items.map((i: any) => ({
-      id: i.menuItem?._id || Math.random().toString(),
-      name: i.menuItem?.name || 'Unknown Item',
-      quantity: i.quantity,
-      price: i.priceAtOrder
-    })),
-    total: dbOrder.totalAmount,
-    status: dbOrder.status as OrderStatus, // normalize casing
-    timestamp: dbOrder.createdAt,
-    pickupTime: "Standard",
-  };
-});
-console.log("mapped status:", mappedOrders[0].status);
+      const mappedOrders = response.data.map((dbOrder: any) => {
+        console.log("Backend status:", dbOrder.status); // <-- add here
+
+        return {
+          id: dbOrder._id,
+          customerName: dbOrder.userId?.name || 'Unknown Customer',
+          items: dbOrder.items.map((i: any) => ({
+            id: i.menuItem?._id || Math.random().toString(),
+            name: i.menuItem?.name || 'Unknown Item',
+            quantity: i.quantity,
+            price: i.priceAtOrder
+          })),
+          total: dbOrder.totalAmount,
+          status: dbOrder.status as OrderStatus, // normalize casing
+          timestamp: dbOrder.createdAt,
+          pickupTime: "Standard",
+        };
+      });
+      console.log("mapped status:", mappedOrders[0].status);
 
 
       setOrders(mappedOrders);
@@ -60,7 +60,7 @@ console.log("mapped status:", mappedOrders[0].status);
     }, 30000);
 
     return () => clearInterval(interval);
-  },[]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -73,7 +73,7 @@ console.log("mapped status:", mappedOrders[0].status);
     try {
       // 1. Optimistic UI Update (Update screen instantly)
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-      
+
       // 2. Network Request
       await API.put(`/orders/${id}/status`, { status });
     } catch (error) {
@@ -89,16 +89,16 @@ console.log("mapped status:", mappedOrders[0].status);
 
   const handleExport = () => {
     setIsExporting(true);
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Order ID,Customer,Total,Status,Pickup Time\n"
       + filteredOrders.map(o => `${o.id},${o.customerName},${o.total},${o.status},${o.pickupTime}`).join("\n");
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `orders_report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
-    
+
     setTimeout(() => {
       link.click();
       document.body.removeChild(link);
@@ -110,9 +110,9 @@ console.log("mapped status:", mappedOrders[0].status);
     const matchesStatus = activeStatus === 'All' || order.status === activeStatus;
     const safeCustomerName = order.customerName || '';
     const safeOrderId = order.id || '';
-    
+
     const matchesSearch = safeOrderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         safeCustomerName.toLowerCase().includes(searchQuery.toLowerCase());
+      safeCustomerName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -144,13 +144,13 @@ console.log("mapped status:", mappedOrders[0].status);
 </button>
         </div>
 
-        <button 
+        <button
           onClick={handleExport}
           disabled={isExporting}
           className="flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-line dark:border-slate-700 text-gray-700 dark:text-gray-300 font-bold px-6 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm disabled:opacity-70"
         >
           {isExporting ? (
-             <Clock className="w-5 h-5 animate-spin" />
+            <Clock className="w-5 h-5 animate-spin" />
           ) : (
             <Download className="w-5 h-5" />
           )}
@@ -164,11 +164,10 @@ console.log("mapped status:", mappedOrders[0].status);
           <button
             key={status}
             onClick={() => setActiveStatus(status)}
-            className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${
-              activeStatus === status
+            className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${activeStatus === status
                 ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100"
                 : "bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400 border-line dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500"
-            }`}
+              }`}
           >
             {status}
           </button>

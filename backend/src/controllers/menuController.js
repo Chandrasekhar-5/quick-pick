@@ -1,5 +1,6 @@
 const MenuItem = require("../models/MenuItem");
 const Vendor = require("../models/Vendor");
+const Order = require("../models/Order");
 
 
 const searchItems = async (req, res) => {
@@ -126,16 +127,169 @@ const getMenuItemsByVendor = async (req, res, next) => {
 const getTrendingItems = async (req, res) => {
     try {
         const campusVendors = await Vendor.find({ collegeId: req.user.college }).select('_id');
-
         const vendorIds = campusVendors.map(vendor => vendor._id);
-        const trendingItems = await MenuItem.find({ vendorId: { $in: vendorIds } })
-            .populate('vendorId', 'name')
-            .limit(8);
+
+        const trendingItems = await Order.aggregate([
+            {
+                $match: {
+                    vendorId: { $in: vendorIds },
+                    status: { $in: ['COMPLETED', 'completed', 'Completed'] }
+                }
+            },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.menuItem',
+                    totalQuantity: { $sum: '$items.quantity' }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: 'menuitems',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'itemDetails'
+                }
+            },
+            { $unwind: '$itemDetails' },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: 'itemDetails.vendorId',
+                    foreignField: '_id',
+                    as: 'vendorDetails'
+                }
+            },
+            { $unwind: '$vendorDetails' },
+            {
+                $project: {
+                    _id: '$itemDetails._id',
+                    name: '$itemDetails.name',
+                    price: '$itemDetails.price',
+                    image: '$itemDetails.image',
+                    isVeg: '$itemDetails.isVeg',
+                    vendorId: '$vendorDetails._id',
+                    vendorName: '$vendorDetails.name',
+                    totalSold: '$totalQuantity'
+                }
+            }
+        ]);
 
         res.status(200).json(trendingItems);
+    } catch (error) {
+        console.error("Error in getTrendingItems:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getAllMenuItemsForAdmin = async (req, res) => {
+    try {
+        const menuItems = await MenuItem.find().populate('vendorId', 'name');
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayOrders = await Order.find({
+            status: { $in: ['COMPLETED', 'Completed', 'completed'] },
+            createdAt: { $gte: today, $lt: tomorrow }
+        });
+        
+        const soldCountMap = new Map();
+        todayOrders.forEach(order => {
+            order.items.forEach(item => {
+                const menuItemId = item.menuItem.toString();
+                const currentCount = soldCountMap.get(menuItemId) || 0;
+                soldCountMap.set(menuItemId, currentCount + item.quantity);
+            });
+        });
+        
+        const allOrders = await Order.find({
+            status: { $in: ['COMPLETED', 'Completed', 'completed'] }
+        });
+        
+        const totalSoldMap = new Map();
+        allOrders.forEach(order => {
+            order.items.forEach(item => {
+                const menuItemId = item.menuItem.toString();
+                const currentCount = totalSoldMap.get(menuItemId) || 0;
+                totalSoldMap.set(menuItemId, currentCount + item.quantity);
+            });
+        });
+        
+        const formatted = menuItems.map(item => {
+            const soldToday = soldCountMap.get(item._id.toString()) || 0;
+            const totalSold = totalSoldMap.get(item._id.toString()) || 0;
+            
+            let popularity = 'low';
+            if (totalSold > 500) popularity = 'top_seller';
+            else if (totalSold > 100) popularity = 'popular';
+            
+            let status = 'active';
+            if (!item.isAvailable) status = 'out_of_stock';
+            else if (soldToday >= 20) status = 'slot_full';
+            
+            return {
+                id: item._id,
+                name: item.name,
+                vendor: item.vendorId?.name || 'Unknown',
+                price: item.price,
+                category: item.category || 'General',
+                soldToday,
+                totalSold,
+                limitPerSlot: 20,
+                remaining: Math.max(0, 20 - soldToday),
+                status,
+                popularity
+            };
+        });
+        
+        res.json(formatted);
+    } catch (error) {
+        console.error("Error in getAllMenuItemsForAdmin:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+const updateMenuItemByAdmin = async (req, res) => {
+    try {
+        const { status, limitPerSlot, price, name, category, isAvailable } = req.body;
+        const item = await MenuItem.findById(req.params.id);
+        
+        if (!item) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+        
+        if (price) item.price = price;
+        if (name) item.name = name;
+        if (category) item.category = category;
+        if (isAvailable !== undefined) item.isAvailable = isAvailable;
+        
+        await item.save();
+        
+        res.json({ message: 'Menu item updated', item });
+    } catch (error) {
+        console.error("Error in updateMenuItemByAdmin:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteMenuItemByAdmin = async (req, res) => {
+    try {
+        const item = await MenuItem.findById(req.params.id);
+        if (!item) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+        
+        await item.deleteOne();
+        res.json({ message: 'Menu item deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-module.exports = { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem };
+module.exports = { searchItems, addMenuItem, updateMenuItem, getMenuItemsByVendor, getTrendingItems, deleteMenuItem, getAllMenuItemsForAdmin, updateMenuItemByAdmin, deleteMenuItemByAdmin };

@@ -27,6 +27,11 @@ const adminSchema = new mongoose.Schema(
             manageOrders: { type: Boolean, default: true },
             manageSettings: { type: Boolean, default: true },
             viewAnalytics: { type: Boolean, default: true }
+        },
+        college: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'College',
+            required: true
         }
     },
     { timestamps: true }
@@ -34,7 +39,7 @@ const adminSchema = new mongoose.Schema(
 
 adminSchema.pre('save', async function(next) {
     if (!this.isModified('password')) {
-        next();
+        return next();
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
