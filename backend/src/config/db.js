@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 async function connectDB() {
     try {
-        console.log("MONGO_URI:", process.env.MONGODB_URI);
         const conn = await mongoose.connect(process.env.MONGODB_URI);
         console.log("Mongodb connected...");
     } catch (error) {

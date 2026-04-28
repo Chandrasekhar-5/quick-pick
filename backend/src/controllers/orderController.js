@@ -1,3 +1,5 @@
+const logger = require("../config/logger");
+
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const Vendor = require('../models/Vendor');
@@ -7,6 +9,13 @@ const placeOrder = async (req, res) => {
         const {vendorId, items } = req.body;
         
         if (!items || items.length === 0) {
+
+            logger.warn({
+                message: "Order failed - empty items",
+                userId: req.user._id,
+                requestId: req.id
+            });
+
             return res.status(400).json({ message: 'No order items provided' });
         }
 
@@ -14,18 +23,27 @@ const placeOrder = async (req, res) => {
         const processedItems = [];
 
         for (const item of items) {
-        const dbItem = await MenuItem.findById(item.menuItem);
+            const dbItem = await MenuItem.findById(item.menuItem);
 
-             if (!dbItem) {
+            if (!dbItem) {
+
+                logger.warn({
+                    message: "Order failed - menu item not found",
+                    menuItemId: item.menuItem,
+                    userId: req.user._id,
+                    requestId: req.id
+                });
+
                 return res.status(404).json({ message: `Menu item not found: ${item.menuItem}` });
-             }
+            }
 
-        processedItems.push({
-            menuItem: item.menuItem,
-            quantity: item.quantity,
-            priceAtOrder: dbItem.price,
-        });
-        totalAmount += dbItem.price * item.quantity;
+            processedItems.push({
+                menuItem: item.menuItem,
+                quantity: item.quantity,
+                priceAtOrder: dbItem.price,
+            });
+
+            totalAmount += dbItem.price * item.quantity;
         }
 
         const order = await Order.create({
@@ -35,10 +53,19 @@ const placeOrder = async (req, res) => {
             totalAmount,
         });
 
+        logger.info({
+            message: "Order placed successfully",
+            orderId: order._id,
+            userId: req.user._id,
+            vendorId,
+            totalAmount,
+            requestId: req.id
+        });
+
         res.status(201).json(order);
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
 
@@ -85,19 +112,44 @@ const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(orderId);
 
         if (!order) {
+
+            logger.warn({
+                message: "Update order failed - order not found",
+                orderId,
+                userId: req.user._id,
+                requestId: req.id
+            });
+
             return res.status(400).json({ message: 'Order not found' });
         }
 
         if (order.vendorId.toString() !== vendorShop._id.toString()) {
+
+            logger.warn({
+                message: "Update order failed - unauthorized",
+                orderId,
+                userId: req.user._id,
+                requestId: req.id
+            });
+
             return res.status(403).json({ message: 'Not authorized to update this order' });
         }
 
         order.status = status;
         const updatedOrder = await order.save();
 
+        logger.info({
+            message: "Order status updated",
+            orderId,
+            status,
+            userId: req.user._id,
+            requestId: req.id
+        });
+
         res.status(200).json(updatedOrder);
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
 
