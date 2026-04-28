@@ -285,28 +285,41 @@ const getCategoryDistribution = async (req, res) => {
 
 const getTopItems = async (req, res) => {
     try {
-        const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
-        if (!vendorShop) {
-            return res.status(404).json({ message: "No shop found" });
+        let matchStage = {
+            status: { $in: ['COMPLETED', 'Completed'] }
+        };
+
+        // 🔥 ROLE-BASED FILTER
+        if (req.user.role === "vendor") {
+            const vendorShop = await Vendor.findOne({ ownerId: req.user._id });
+
+            if (!vendorShop) {
+                return res.status(404).json({ message: "No shop found" });
+            }
+
+            matchStage.vendorId = vendorShop._id;
         }
 
         const topItems = await Order.aggregate([
-            {
-                $match: {
-                    vendorId: vendorShop._id,
-                    status: { $in: ['COMPLETED', 'Completed'] }
-                }
-            },
+            { $match: matchStage },
+
             { $unwind: '$items' },
+
             {
                 $group: {
                     _id: '$items.menuItem',
                     totalSales: { $sum: '$items.quantity' },
-                    revenue: { $sum: { $multiply: ['$items.quantity', '$items.priceAtOrder'] } }
+                    revenue: {
+                        $sum: {
+                            $multiply: ['$items.quantity', '$items.priceAtOrder']
+                        }
+                    }
                 }
             },
+
             { $sort: { totalSales: -1 } },
             { $limit: 4 },
+
             {
                 $lookup: {
                     from: 'menuitems',
@@ -315,7 +328,9 @@ const getTopItems = async (req, res) => {
                     as: 'details'
                 }
             },
+
             { $unwind: '$details' },
+
             {
                 $project: {
                     name: '$details.name',
@@ -327,7 +342,13 @@ const getTopItems = async (req, res) => {
                         $cond: [
                             { $gt: ['$totalSales', 50] },
                             'Trending',
-                            { $cond: [{ $gt: ['$totalSales', 20] }, 'Growing', 'New' ] }
+                            {
+                                $cond: [
+                                    { $gt: ['$totalSales', 20] },
+                                    'Growing',
+                                    'New'
+                                ]
+                            }
                         ]
                     }
                 }
@@ -339,9 +360,124 @@ const getTopItems = async (req, res) => {
         }
 
         res.json(topItems);
+
     } catch (error) {
         console.error("Error in getTopItems:", error);
         res.status(500).json({ message: error.message });
+    }
+};
+
+const getOrdersPerShop = async (req, res) => {
+    try {
+        const ordersByShop = await Order.aggregate([
+            {
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
+            },
+            {
+                $group: {
+                    _id: '$vendorId',
+                    orders: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'vendor'
+                }
+            },
+            { $unwind: '$vendor' },
+            {
+                $project: {
+                    shop: '$vendor.name',
+                    orders: 1
+                }
+            },
+            { $sort: { orders: -1 } }
+        ]);
+        
+        res.json(ordersByShop.length ? ordersByShop : [{ shop: "No data available", orders: 0 }]);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+        res.json([{ shop: "No data available", orders: 0 }]);
+    }
+};
+
+const getTopItemsBySales = async (req, res) => {
+    try {
+        const topItems = await Order.aggregate([
+            {
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
+            },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.menuItem',
+                    orders: { $sum: '$items.quantity' }
+                }
+            },
+            { $sort: { orders: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'menuitems',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'item'
+                }
+            },
+            { $unwind: '$item' },
+            {
+                $project: {
+                    name: '$item.name',
+                    orders: 1
+                }
+            }
+        ]);
+        
+        res.json(topItems.length ? topItems : [{ name: "No data available", orders: 0 }]);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+        res.json([{ name: "No data available", orders: 0 }]);
+    }
+};
+
+const getVendorPerformance = async (req, res) => {
+    try {
+        const vendorPerformance = await Order.aggregate([
+            {
+                $match: { status: { $in: ['COMPLETED', 'Completed', 'completed'] } }
+            },
+            {
+                $group: {
+                    _id: '$vendorId',
+                    revenue: { $sum: '$totalAmount' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vendors',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'vendor'
+                }
+            },
+            { $unwind: '$vendor' },
+            {
+                $project: {
+                    name: '$vendor.name',
+                    revenue: 1
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 5 }
+        ]);
+        
+        res.json(vendorPerformance.length ? vendorPerformance : [{ name: "No data available", revenue: 0 }]);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+        res.json([{ name: "No data available", revenue: 0 }]);
     }
 };
 
@@ -351,5 +487,8 @@ module.exports = {
     getBestSellers,
     getRevenueData,
     getCategoryDistribution,
-    getTopItems
+    getTopItems,
+    getOrdersPerShop,
+    getTopItemsBySales,
+    getVendorPerformance
 };
