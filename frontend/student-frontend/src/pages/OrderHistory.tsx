@@ -1,16 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, Clock, Search, Filter, RefreshCw, XCircle, QrCode
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './OrderHistory.css';
+import API from '../services/api'; // Assuming API is available for fetching vendors
+
+interface Vendor {
+  _id: string;
+  name: string;
+  logo: string;
+  // Add other properties if needed for future use
+}
 
 const OrderHistory: React.FC = () => {
   const navigate = useNavigate();
   const { orders, cancelOrder, addToCart } = useApp();
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [vendorsMap, setVendorsMap] = useState<Map<string, string>>(new Map()); // Map shopName to logo URL
+  const [loadingVendors, setLoadingVendors] = useState(true);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const res = await API.get('/vendors');
+        const map = new Map<string, string>();
+        res.data.forEach((vendor: Vendor) => {
+          map.set(vendor.name, vendor.logo || "https://picsum.photos/seed/shop/100/100"); // Fallback if logo is missing
+        });
+        setVendorsMap(map);
+      } catch (error) {
+        console.error("Failed to fetch vendors for OrderHistory:", error);
+      } finally {
+        setLoadingVendors(false);
+      }
+    };
+    fetchVendors();
+  }, []);
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = filter === 'all' || order.status === filter;
@@ -32,7 +60,7 @@ const OrderHistory: React.FC = () => {
   const handleReorder = (order: any) => {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach((item: any) => {
-        addToCart(item, order.shopId);
+        addToCart(item, order.shopId); // Assuming order.shopId is available on the order object for addToCart
       });
       navigate('/cart');
     }
@@ -43,6 +71,15 @@ const OrderHistory: React.FC = () => {
       cancelOrder(orderId);
     }
   };
+
+  if (loadingVendors) {
+    // Optionally render a loading spinner or skeleton while vendor logos are being fetched
+    return (
+      <div className="order-history-page container" style={{ textAlign: 'center', padding: '50px' }}>
+        <p>Loading order history...</p>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -92,7 +129,12 @@ const OrderHistory: React.FC = () => {
             <div key={order.id} className="order-card card">
               <div className="order-card-header">
                 <div className="shop-info">
-                  <img src="https://picsum.photos/seed/shop/100/100" alt={order.shopName || 'Shop'} referrerPolicy="no-referrer" />
+                  {/* Use the vendor logo from the fetched map */}
+                  <img 
+                    src={vendorsMap.get(order.shopName) || "https://picsum.photos/seed/shop/100/100"} 
+                    alt={order.shopName || 'Shop'} 
+                    referrerPolicy="no-referrer" 
+                  />
                   <div className="text">
                     <h3>{order.shopName || 'Unknown Shop'}</h3>
                     <p>{order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'Unknown Date'}</p>
@@ -145,7 +187,7 @@ const OrderHistory: React.FC = () => {
                       <span>Cancel</span>
                     </button>
                   )}
-                  {(order.status === 'picked_up' || order.status === 'cancelled') && (
+                  {(order.status === 'completed' || order.status === 'cancelled') && (
                     <button className="reorder-btn" onClick={() => handleReorder(order)}>
                       <RefreshCw size={16} />
                       <span>Reorder</span>
