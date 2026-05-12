@@ -16,6 +16,13 @@ import { useApp } from '../context/AppContext';
 import './OrderTracking.css';
 import API from '../services/api';
 
+interface Vendor {
+  _id: string;
+  name: string;
+  logo: string;
+  phone?: string;
+}
+
 const OrderTracking: React.FC = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -30,8 +37,37 @@ const OrderTracking: React.FC = () => {
   const [chatHistory, setChatHistory] = useState([
     { sender: 'vendor', text: 'Hello! We are preparing your order.', time: 'Just now' }
   ]);
+  const [vendorLogo, setVendorLogo] = useState<string>('');
+  const [vendorPhone, setVendorPhone] = useState<string>('');
+  const [loadingVendor, setLoadingVendor] = useState(true);
 
-  // 🔥 FETCH ORDER FROM DB (with vendor data)
+  useEffect(() => {
+    const fetchVendorDetails = async () => {
+      if (!order?.shopName) return;
+      
+      try {
+        const res = await API.get('/vendors');
+        const vendor = res.data.find((v: Vendor) => v.name === order.shopName);
+        
+        if (vendor) {
+          setVendorLogo(vendor.logo || "https://picsum.photos/seed/shop/100/100");
+          setVendorPhone(vendor.phone || dbOrder?.shopPhone || '9876543210');
+        } else {
+          setVendorLogo("https://picsum.photos/seed/shop/100/100");
+          setVendorPhone(dbOrder?.shopPhone || '9876543210');
+        }
+      } catch (error) {
+        console.error("Failed to fetch vendor details:", error);
+        setVendorLogo("https://picsum.photos/seed/shop/100/100");
+        setVendorPhone(dbOrder?.shopPhone || '9876543210');
+      } finally {
+        setLoadingVendor(false);
+      }
+    };
+
+    fetchVendorDetails();
+  }, [order?.shopName, dbOrder?.shopPhone]);
+
   useEffect(() => {
     if (!orderId) return;
 
@@ -42,7 +78,6 @@ const OrderTracking: React.FC = () => {
 
         setDbOrder(data);
 
-        // sync status
         if (data.status !== order?.status) {
           updateOrderStatus(orderId, data.status.toLowerCase());
         }
@@ -165,8 +200,9 @@ const OrderTracking: React.FC = () => {
 
             <div className="shop-mini-info">
               <img 
-                src={dbOrder?.shopImage || "https://picsum.photos/100"} 
+                src={vendorLogo || "https://picsum.photos/seed/shop/100/100"} 
                 alt={order.shopName} 
+                referrerPolicy="no-referrer"
               />
               <div className="text">
                 <h4>{order.shopName}</h4>
@@ -225,7 +261,7 @@ const OrderTracking: React.FC = () => {
 
             <div className="help-actions">
               <a 
-                href={`tel:${dbOrder?.shopPhone || '9876543210'}`} 
+                href={`tel:${vendorPhone || '9876543210'}`} 
                 className="help-btn"
               >
                 <Phone size={18} />

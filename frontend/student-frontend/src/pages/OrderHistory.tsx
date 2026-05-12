@@ -5,13 +5,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './OrderHistory.css';
-import API from '../services/api'; // Assuming API is available for fetching vendors
+import API from '../services/api';
 
 interface Vendor {
   _id: string;
   name: string;
   logo: string;
-  // Add other properties if needed for future use
 }
 
 const OrderHistory: React.FC = () => {
@@ -28,7 +27,7 @@ const OrderHistory: React.FC = () => {
         const res = await API.get('/vendors');
         const map = new Map<string, string>();
         res.data.forEach((vendor: Vendor) => {
-          map.set(vendor.name, vendor.logo || "https://picsum.photos/seed/shop/100/100"); // Fallback if logo is missing
+          map.set(vendor.name, vendor.logo || "https://picsum.photos/seed/shop/100/100");
         });
         setVendorsMap(map);
       } catch (error) {
@@ -60,7 +59,7 @@ const OrderHistory: React.FC = () => {
   const handleReorder = (order: any) => {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach((item: any) => {
-        addToCart(item, order.shopId); // Assuming order.shopId is available on the order object for addToCart
+        addToCart(item, order.shopId);
       });
       navigate('/cart');
     }
@@ -73,7 +72,6 @@ const OrderHistory: React.FC = () => {
   };
 
   if (loadingVendors) {
-    // Optionally render a loading spinner or skeleton while vendor logos are being fetched
     return (
       <div className="order-history-page container" style={{ textAlign: 'center', padding: '50px' }}>
         <p>Loading order history...</p>
